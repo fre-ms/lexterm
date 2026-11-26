@@ -6,9 +6,36 @@
 Finds medical terms in German clinical text and assigns them the codes of the terminologies they belong to,
 for a person to confirm.
 
-The project is at the design stage: there is no library here yet, only a prototype of the matcher inside the
-bench. The [design](docs/design.md) says what is to be built and in which order. What lexterm shares with its
-sibling lexident (identifying information) is designed as a common core, lexcor, in a repository of its own.
+The project is at its first stage (0.1). The [design](docs/design.md) says what is to be built and in which
+order. What lexterm shares with its sibling lexident (identifying information) is a common core,
+[lexcor](https://github.com/fre-ms/lexcor), in a repository of its own.
+
+```python
+import lexterm
+
+for mention in lexterm.tag("Bekannte arterielle Hypertonie, Ramipril seit 2019."):
+    print(mention.start, mention.end, mention.text,
+          [(a.system, a.code, a.cls, a.kind) for a in mention.assignments])
+```
+
+What is here:
+
+- `lexterm.tag`: which concepts a text mentions, each with the package, the code, the class and the kind of the
+  match; `lexterm.covers`: whether a span is medical vocabulary at all, generously (a part of a hyphenated word
+  counts, an eponym on its own counts), for a program that guesses at names;
+- the medical rules: spellings that stand side by side ("Colitis" and "Kolitis"), and the head nouns after
+  which a name is an eponym ("Babinski-Zeichen");
+- one free package that comes with it: the German names of what Wikidata lists with a medical identifier
+  (ICD-10, ATC, INN, LOINC, MeSH), 17,600 items in 39,600 names, CC0 1.0, with Wikidata's identifiers as codes;
+- a store of its own for the packages a user imports, edits or builds from a source they hold a licence for
+  (`lexterm.open_store()`, `lexterm.install(store)`), and the command line `lexterm packages …`, `lexterm tag
+  FILE`.
+
+Without a store lexterm recognises with the package it brings, in memory, and writes nothing anywhere; that is
+how a program that reads documents uses it. Not here yet: the annotation document with a person's decisions,
+the windows, the output as FHIR and for medDAV, the client and server of a terminology server.
+
+Tests: `pytest`; checks: `ruff check .` and `mypy`.
 
 ## What it is to do
 

@@ -375,6 +375,12 @@ options are English; messages are German or English (`--language`).
 **Dependencies**: the core needs Python's standard library and SQLite only. The windows (PySide6) and the UIMA
 CAS export are extras.
 
+**Inside another program.** lexterm is a library first: PseudonyMed, medorello and semdoc (the step of the
+document tools that understands what was read from a page) import it. Without a store it recognises with the
+free packages it brings, in memory, and writes nothing; a caller that has a store hands it in, for reading
+only where the store comes inside a program. What the core keeps for such a caller is in lexcor's design
+(section 8).
+
 ## 12 The sibling: lexident
 
 PseudonyMed's table of identifying information (hospitals, occupations, studies, titles and a user's own
@@ -398,6 +404,9 @@ redaction, the re-check, the estimate of residual risk.
 
 1. **0.1** The matcher and the vocabulary leave PseudonyMed with their history. Packages as FHIR CodeSystem and
    CSV, the store, `tag` with every assignment, `covers`; PseudonyMed switches over.
+   *Begun: lexterm is a library (`lexterm.tag`, `lexterm.covers`, a store of its own, the command line) with
+   the table of spellings, the head nouns of eponyms and one free package, the German names of what Wikidata
+   lists with a medical identifier. PseudonyMed's matcher runs on lexcor; its vocabulary has not moved yet.*
 2. **0.2** The annotation document with origin and status; the two windows.
 3. **0.3** Output as FHIR, for medDAV and as UIMA CAS; importers for FHIR packages, SNOMED CT release files and
    MeSH; instructions for the packages a user builds.

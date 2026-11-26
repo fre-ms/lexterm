@@ -1,0 +1,58 @@
+[project]
+name = "lexterm"
+version = "0.1.0"
+description = "Finds medical terms in German clinical text and assigns them the codes of their terminologies."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "fre.ms", email = "fre.ms@fre.ms" }]
+keywords = ["terminology", "medical", "fhir", "codesystem", "dictionary-matching", "german", "nlp"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Healthcare Industry",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Topic :: Text Processing :: Linguistic",
+]
+dependencies = [
+  # packages of terms, their store and their recognition: the core lexterm shares with lexident
+  "lexcor>=0.1.1",
+]
+
+[project.scripts]
+lexterm = "lexterm.cli:main"
+
+[dependency-groups]
+dev = [
+  "pytest>=8",
+  "ruff>=0.6",
+  "mypy>=1.11",
+]
+
+[tool.uv.sources]
+# a released tag, not the working tree next door: lexterm moves to a new core on purpose
+lexcor = { git = "https://github.com/fre-ms/lexcor", tag = "v0.1.1" }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["lexterm"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["bench"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+strict = true
+files = ["lexterm"]
