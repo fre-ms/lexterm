@@ -408,6 +408,8 @@ redaction, the re-check, the estimate of residual risk.
    the table of spellings, the head nouns of eponyms and one free package, the German names of what Wikidata
    lists with a medical identifier. PseudonyMed's matcher runs on lexcor; its vocabulary has not moved yet.*
 2. **0.2** The annotation document with origin and status; the two windows.
+   *In lexterm 0.2.0: the annotation document, which is lexcor's (`lexterm.annotate`, `lexterm tag FILE
+   --annotation FILE`). The windows are still to come.*
 3. **0.3** Output as FHIR, for medDAV and as UIMA CAS; importers for FHIR packages, SNOMED CT release files and
    MeSH; instructions for the packages a user builds.
 4. **0.4** Client of a terminology server.

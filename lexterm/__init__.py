@@ -12,6 +12,9 @@ nothing anywhere.  With a store (:func:`open_store`) it recognises with the pack
 store: the ones a user imported, edited or built from a source they hold a licence for;
 :func:`install` puts the free packages into a store as well.
 
+What was found and what a person decided about it is kept in an annotation document
+(:func:`annotate`), which a later run updates without touching a decision.
+
 Two questions are kept apart (design, section 5.3): :func:`tag` says which concepts a text
 mentions and gives codes; :func:`covers` says whether a span is medical vocabulary at all,
 generously, for a program that guesses at names and must leave such words alone.
@@ -27,15 +30,16 @@ from functools import cache
 from pathlib import Path
 
 import lexcor
-from lexcor import Cover, Mention, PackageInfo, Recogniser, Store, entries_of
+from lexcor import Annotation, Cover, Mention, PackageInfo, Recogniser, Store, entries_of
+from lexcor.annotation import packages_of
 
 from lexterm import bundled
 from lexterm.rules import EPONYM_HEADS, VARIANTS
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
-__all__ = ["EPONYM_HEADS", "VARIANTS", "bundled", "cover", "covers", "install", "open_store",
-           "recogniser", "tag"]
+__all__ = ["EPONYM_HEADS", "VARIANTS", "annotate", "bundled", "cover", "covers", "install",
+           "open_store", "recogniser", "tag"]
 
 Choice = tuple[str, ...] | None
 
@@ -91,6 +95,32 @@ def tag(text: str, store: Store | None = None, packages: Iterable[str] | None = 
     code points) and one assignment for each concept its words may mean, each with the
     package, the code, the class and the kind of the match."""
     return recogniser(store, packages, classes, language).tag(text)
+
+
+@cache
+def _bundled_listing() -> tuple[tuple[str, str, str], ...]:
+    return tuple((p.url, p.version, p.sha256()) for p in bundled.packages())
+
+
+def annotate(text: str, store: Store | None = None, packages: Iterable[str] | None = None,
+             classes: Iterable[str] | None = None, language: str = "de",
+             annotation: Annotation | None = None) -> Annotation:
+    """Tag a text and give its annotation document: a new one, or the one handed in brought
+    up to date.  What a person confirmed, rejected or marked in it stays; only what lexterm
+    proposed before and nobody has decided is replaced.  The document names the packages
+    with their versions and fingerprints, so that it says what it was made from."""
+    found = tag(text, store, packages, classes, language)
+    wanted = _chosen(packages)
+    if store is None:
+        listed = [{"url": url, "version": version, "sha256": sha256}
+                  for url, version, sha256 in _bundled_listing()
+                  if wanted is None or url in wanted]
+    else:
+        listed = packages_of(store, wanted)
+    name = f"lexterm {__version__}"
+    settings = {"packages": list(wanted or ()), "classes": list(_chosen(classes) or ()),
+                "language": language}
+    return (annotation or Annotation()).update(text, found, name, name, listed, settings)
 
 
 def cover(store: Store | None = None, packages: Iterable[str] | None = None,

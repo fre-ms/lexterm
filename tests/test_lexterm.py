@@ -101,3 +101,28 @@ def test_importing_lexterm_loads_no_package() -> None:
     script = ("import lexterm, sys; from lexterm import bundled;"
               "sys.exit(bundled.wikidata.cache_info().currsize)")
     assert subprocess.run([sys.executable, "-c", script], check=False).returncode == 0
+
+
+def test_the_annotation_document_keeps_a_persons_decisions(tmp_path: Path) -> None:
+    from lexcor import load_annotation
+
+    text = "Bekannte arterielle Hypertonie, Ramipril seit 2019."
+    document = lexterm.annotate(text)
+    assert document.made_with == f"lexterm {lexterm.__version__}"
+    assert document.packages == [{"url": bundled.WIKIDATA, "version": bundled.WIKIDATA_VERSION,
+                                  "sha256": bundled.wikidata().sha256()}]
+    assert document.settings == {"packages": [], "classes": [], "language": "de"}
+    assert [(n.id, n.exact) for n in document.mentions] == [("m1", "arterielle Hypertonie"),
+                                                            ("m2", "Ramipril")]
+    document.reject("m2")
+    document.confirm("m1")
+    document.save(tmp_path / "letter.lexterm.json")
+    again = lexterm.annotate(text, annotation=load_annotation(tmp_path / "letter.lexterm.json"))
+    assert [(n.id, a.status) for n, a in again.assignments(None)] == [
+        ("m1", "confirmed"), ("m2", "rejected")]
+    assert again.dumps() == document.dumps()  # the same text and decisions: the same bytes
+    longer = "Neu: Diabetes mellitus. " + text
+    moved = lexterm.annotate(longer, annotation=again)
+    assert [(n.exact, a.status) for n, a in moved.assignments(None)] == [
+        ("Diabetes mellitus", "proposed"), ("arterielle Hypertonie", "confirmed"),
+        ("Ramipril", "rejected")]

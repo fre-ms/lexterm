@@ -43,3 +43,15 @@ def test_a_users_package_is_tagged_with_lexterms_spellings(
     with pytest.raises(SystemExit):
         main(["--help"])
     assert "usage: lexterm" in capsys.readouterr().out
+
+
+def test_the_command_line_writes_the_annotation_document(
+        files: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    import lexterm
+
+    target = files / "letter.lexterm.json"
+    assert main(["tag", str(files / "letter.txt"), "--annotation", str(target)]) == 0
+    capsys.readouterr()
+    document = json.loads(target.read_text(encoding="utf-8"))
+    assert document["lexcor"] == 1 and document["made_with"] == f"lexterm {lexterm.__version__}"
+    assert "Ramipril" in [m["exact"] for m in document["mentions"]]

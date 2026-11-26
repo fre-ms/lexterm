@@ -31,9 +31,12 @@ What is here:
   (`lexterm.open_store()`, `lexterm.install(store)`), and the command line `lexterm packages …`, `lexterm tag
   FILE`.
 
+- the annotation document (`lexterm.annotate`, `lexterm tag FILE --annotation FILE`): what was found and what
+  a person decided, in one JSON file beside the text; a later run keeps every decision.
+
 Without a store lexterm recognises with the package it brings, in memory, and writes nothing anywhere; that is
-how a program that reads documents uses it. Not here yet: the annotation document with a person's decisions,
-the windows, the output as FHIR and for medDAV, the client and server of a terminology server.
+how a program that reads documents uses it. Not here yet: the windows, the output as FHIR and for medDAV, the
+client and server of a terminology server.
 
 Tests: `pytest`; checks: `ruff check .` and `mypy`.
 

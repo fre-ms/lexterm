@@ -3,7 +3,7 @@
 """The command line of lexterm: the core's commands under lexterm's name.
 
     lexterm packages list | import FILE | export PACKAGE FILE | remove PACKAGE
-    lexterm tag FILE [--package PACKAGE]... [--class CLASS]...
+    lexterm tag FILE [--package PACKAGE]... [--class CLASS]... [--annotation FILE]
 
 The store is lexterm's in the user's data folder unless ``--store`` names another.  A store
 that holds no package yet is answered from the packages that come with lexterm, so that
@@ -27,7 +27,8 @@ def _tag(text: str, store: Store, packages: Iterable[str] | None,
 
 def main(arguments: Sequence[str] | None = None) -> int:
     """Run one command; returns the exit code."""
-    return lexcor.cli.main(arguments, program="lexterm", library="lexterm", tagger=_tag)
+    return lexcor.cli.main(arguments, program="lexterm", library="lexterm", tagger=_tag,
+                           version=lexterm.__version__)
 
 
 if __name__ == "__main__":
