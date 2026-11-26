@@ -205,7 +205,8 @@ every one of them becomes an assignment. lexterm does not choose between them.
   from 32 % to 41 %, because more concepts were in the package at all. It is built with lexcor 0.3 as a module
   that is switched on and proposes in the review window, never as a source of assignments (decided on
   26 November 2026). Its model (1.1 GB) is fetched by the user; the model's page states no licence, while its
-  English sibling by the same authors is under Apache 2.0, and this is settled before anything is passed on.
+  English sibling by the same authors is under Apache 2.0. The authors are asked; until they answer, the
+  project goes on as if this model were under Apache 2.0 as well (decided on 27 November 2026).
 - **Terms of another language than the text** are not looked for by the rules: with English names in the
   dictionary the rules tagged "gut", "fast" and "Berlin" in German letters. Every term carries its language,
   and a package in another language reaches a text only through the search by meaning.

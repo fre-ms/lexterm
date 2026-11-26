@@ -330,8 +330,9 @@ des Pakets.
   1,11 GB. **Die Modellkarte nennt keine Lizenz**; der Programmcode dazu steht unter MIT. Das englische
   Schwestermodell derselben Gruppe (`SapBERT-from-PubMedBERT-fulltext`) trägt bei Hugging Face die Angabe
   Apache 2.0, das mehrsprachige und seine große Fassung tragen keine (Abfrage der Modellangaben am
-  26.11.2026). Das Trainingsmaterial geben die Autoren wegen der UMLS-Lizenz nicht weiter. Ob ein auf dem UMLS
-  trainiertes Modell weitergegeben werden darf, ist vor jeder Auslieferung zu klären. Die Aufsätze zum Modell
+  26.11.2026). Das Trainingsmaterial geben die Autoren wegen der UMLS-Lizenz nicht weiter. **Entschieden am
+  27.11.2026:** Die Autoren werden gefragt; bis sie antworten, gilt für das Vorhaben die Annahme, dass auch
+  dieses Modell unter Apache 2.0 steht. Die Aufsätze zum Modell
   habe ich nicht gelesen; hier steht nur, was die Modellkarte sagt und was gemessen ist.
 - **Umgebung:** PyTorch 2.15 und transformers 5.24, zusammen 800 MB, nur Prozessor (Apple M1 Max, acht
   Fäden). Eine Grafikkarte wird auch dort nicht benutzt, wo eine da ist.
@@ -479,8 +480,8 @@ trägt deshalb seine Sprache, und die Regeln suchen nur Begriffe in der Sprache 
    wie es sich mit einem Paket von Millionen Namen verhält (mehr Abdeckung, mehr Verwechslungen), ist offen.
 4. **Sie ersetzt keinen Menschen:** Was in keinem Paket steht, bekommt den nächstbesten Namen.
 5. **Kosten und Lizenz** sprechen für ein zuschaltbares Modul: 1,9 GB für Modell und Laufzeit, 2,4 GB
-   Arbeitsspeicher, knapp zwei Sekunden je Brief, und ein Modell, das der Anwender selbst laden muss, solange
-   seine Lizenz nicht geklärt ist. Der Kern bleibt ohne.
+   Arbeitsspeicher, knapp zwei Sekunden je Brief, und ein Modell, das der Anwender selbst lädt (zu seiner
+   Lizenz siehe 7.1). Der Kern bleibt ohne.
 
    **Entschieden am 26.11.2026:** Die Suche nach Bedeutung wird mit `lexcor` 0.3 als zuschaltbares Modul
    gebaut, das im Prüffenster vorschlägt und nichts selbst zuordnet.
