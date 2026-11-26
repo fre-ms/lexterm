@@ -60,7 +60,7 @@ class Lexcor:
     def build(self, entries: Entries) -> None:
         from lexcor import Entry, Recogniser
         self.recogniser = Recogniser(
-            (Entry(term, None, "bench", "", code, term, "", "", "synonym")
+            (Entry(term, "bench", "", code, term, "", "", "synonym")
              for term, code in entries), self.variants)
 
     def tag(self, text: str) -> list[Match]:

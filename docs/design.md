@@ -87,16 +87,17 @@ format of lexterm's own is needed:
 | licence and source | `copyright`, `publisher` |
 | concept: code and name to show | `concept.code`, `concept.display` |
 | terms of a concept, with their language | `concept.designation` (`value`, `language`) |
-| kind of a term: preferred, synonym, abbreviation | `concept.designation.use` |
+| kind of a term: preferred, synonym, abbreviation | `concept.designation.use`: a further name to show carries HL7's code `display`, a synonym carries none, an abbreviation a code of lexcor's own |
 | class of a concept (anatomy, drug, laboratory test, disorder …) | `concept.property` with the code `class` |
-| parent of a concept, where the source has a hierarchy | `concept.property` with the code `parent` |
+| parent of a concept, where the source has a hierarchy | `concept.property` with the code `parent`, FHIR's own property |
 
-Two things FHIR has no element for are kept in an extension of lexterm's own on the CodeSystem: whether the
-package **may be passed on** (`redistributable`), and for a term whether it is matched **only as written**
-(abbreviations and words of up to three letters, section 5.2).
+A package is written with FHIR's own elements and codes wherever FHIR has one. Two things it has none for are
+lexcor's own, because lexident's packages need them just as much: whether the package **may be passed on** (an
+extension `redistributable`), and the kind of term **abbreviation**, which is matched only as written
+(section 5.2). lexcor's design (section 3.1) has the details.
 
 A plain list of words (a user's own terms) is a package too: the code of each concept is the word itself, and
-the URI is a local one.
+its URI is one of the store that takes it in, which belongs to whoever keeps that store.
 
 **CSV** is the second form, for lists made by hand and for spreadsheets: one row per term with the columns
 `term`, `code`, `display`, `class`, `kind`, `language`; only `term` is required. Comma-separated, UTF-8.
