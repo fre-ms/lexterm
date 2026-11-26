@@ -3,8 +3,10 @@
 
 # lexterm: design
 
-Draft 0.1, 26 November 2026. Nothing of this is built yet. The [survey of open-source tools](../reports/Bestandsaufnahme%20quelloffener%20Werkzeuge.md)
-(in German) says what exists already and why the parts below are built or taken over.
+Draft 0.2, 26 November 2026. Nothing of this is built yet but a prototype of the matcher and a bench. Two
+reports (in German) say what exists already and why the parts below are built or taken over: the
+[survey of open-source tools](../reports/Bestandsaufnahme%20quelloffener%20Werkzeuge.md) and the
+[trial of existing recognisers](../reports/Erprobung%20vorhandener%20Erkenner.md).
 
 ## 1 Purpose
 
@@ -20,6 +22,10 @@ belongs to, for a person to confirm. It does three things:
 
 It is a library, a command-line program and a window, and it can be both the **client** of a terminology server
 and a small **server** itself.
+
+Two conditions hold for everything in it: it runs on an ordinary computer **without a graphics card or other
+special hardware**, and it **can be packaged** as a program that is shipped with others (as PseudonyMed and
+optdoc are). A part that needs more is an option outside the package, never the core.
 
 What it is not:
 
@@ -128,6 +134,17 @@ The matcher is the one PseudonyMed has used since October 2026 over some 45,000 
 dictionary matcher: fast, without a network, without a model, and it gives the same result for the same input.
 It finds only what a package holds in so many words; better German packages are the way to find more.
 
+The trial of November 2026 set a prototype of it beside the libraries at hand, each with the same dictionary:
+the prototype linked 89 % of the test places and tagged nothing it should not; every plain dictionary matcher
+(FlashText, pyahocorasick, spaCy's PhraseMatcher, EDS-NLP, iamsystem as it comes) and MedCAT without a trained
+model linked 63 to 64 %, because none of them knows German inflection endings or transliterated umlauts. Only
+iamsystem with an ending rule and a tolerance for one spelling error did better there (98 %).
+
+On German text annotated by people (the Mantra corpus) the same prototype, with the free dictionary, found 38 %
+of the places and linked 20 % to the identifier the annotators chose; no dictionary method reached half. What
+limits it is the dictionary: one annotated place in five stands in it in so many words. The matcher is the
+small part of the work; the packages decide how good recognition is.
+
 ### 5.2 Matching
 
 A text is cut into words. A term matches where the words of the text spell it:
@@ -161,8 +178,16 @@ every one of them becomes an assignment. lexterm does not choose between them.
   sentence (the ConText method). No German rules of this kind are freely at hand in the tools surveyed; a
   German trigger list exists and its licence is to be cleared. A stage that can be switched off, and its result
   is a proposal at the mention.
-- **Other recognisers**: every assignment names the recogniser that made it (section 6), so that a learning
-  recogniser can be added later as a second source of proposals without changing anything else.
+- **Spelling variants**: a fixed rule for the spellings German medicine has side by side (c, k and z: "Colitis"
+  and "Kolitis", "Lactulose" and "Laktulose").
+- **Spelling errors**: a tolerance for one wrong letter is **not** a way to make assignments. On real letters
+  the trial saw it turn "Papille" into "Pupille", "Gewicht" into "Gesicht" and "Kollegen" into "Kollagen". At
+  most it is a source of proposals for text that comes from text recognition, each marked as fitting only
+  roughly and none in force until a person confirms it.
+- **Other recognisers**: a recogniser is anything that takes a text and the packages and returns places with
+  codes. Every assignment names the recogniser that made it (section 6), so that MedCAT with a model trained on
+  German text, or another learning recogniser, can be added as a second source of proposals without being
+  shipped with lexterm and without changing anything else.
 
 ## 6 The annotation document
 
@@ -334,10 +359,18 @@ PseudonyMed's table of identifying information (hospitals, occupations, studies,
 entries, recognised by rules of context) is to become a library of its own on the same idea, and PseudonyMed
 then joins optdoc, lexterm and lexident.
 
-lexident is not designed here. What it will share with lexterm is plain already: packages with a licence and an
-overlay, the store, the matcher, the annotation document, the review window. So that it need not copy them,
-these parts of lexterm are written **without anything medical in them**; whether lexident then depends on
-lexterm or both depend on a small common core is decided when lexident is designed.
+lexident is not designed here. What it shares with lexterm is plain already: packages with a licence and an
+overlay, the store, the matcher, the annotation document, the review window, client and server. Decided on
+26 November 2026: these parts become a **common core** that both libraries use, with the working name
+**lexcor**, written without anything medical and without anything about persons in it. lexterm adds the
+medical packages, their importers and the output for FHIR and medDAV; lexident adds its packages and the rules
+of context that decide whether a listed word identifies anyone.
+
+Decided as well: lexident is to do **all** recognition of identifying information in the end, built in stages.
+First what PseudonyMed's identifier step does today (lists with rules of context, registry numbers); then
+patterns (telephone, e-mail, bank and insurance numbers, dates); then the identifiers of one patient as a
+package the caller hands over. PseudonyMed is then what joins the parts and keeps what is its own: pseudonyms,
+redaction, the re-check, the estimate of residual risk.
 
 ## 13 Stages
 
@@ -349,8 +382,9 @@ lexterm or both depend on a small common core is decided when lexident is design
 4. **0.4** Client of a terminology server.
 5. **0.5** Server.
 
-Beside these, from 0.1 on: a small bench that measures the matcher on freely available German texts against
-the recognisers named in the survey, before more is built on it.
+Beside these: the bench in [`bench/`](../bench/), which measures recognisers with one dictionary on a test set
+whose truth is known by construction. Its first run is the trial named above. Still to come is a measurement on
+freely available German texts with a checked truth.
 
 ## 14 Open questions
 
@@ -359,6 +393,7 @@ the recognisers named in the survey, before more is built on it.
 2. **The user's vocabulary today** lives in PseudonyMed's pseudonym database. It moves to lexterm's store once,
    by a command; PseudonyMed keeps no second copy.
 3. **German MeSH**: whether its terms of use allow bundling.
-4. **lexident**: dependency on lexterm or a common core (section 12).
+4. **The common core** (section 12): one repository for the three packages or three repositories, and which
+   of the three is built first.
 5. **Context** (5.5): the licence of the German trigger list, and whether rules of lexterm's own are better.
 6. **The order of stages 0.4 and 0.5**, if a program needs the server early.

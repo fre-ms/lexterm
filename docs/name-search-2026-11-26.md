@@ -91,6 +91,34 @@ A name checked the same way as a fallback, first stage only: **identlex** is fre
 has no domain under `.com`, `.de`, `.org`, `.net`, `.eu`, `.io` or `.app`, no repository on GitHub, no hit on
 the web and none in the DPMAregister. TMview was not asked.
 
+"lexident" was chosen on 26 November 2026 with all this known: the neighbours are far enough for a free
+library, and marks in the United States do not weigh for a project made in Europe.
+
+## The common core: "lexcor"
+
+Proposed on 26 November 2026 for the core that lexterm and lexident share. First stage and two TMview queries
+(fuzzy `lexcor`, "contains" `lexcor`).
+
+| Check | Result |
+|---|---|
+| Packages | `lexcor` is free on PyPI, npm and crates.io |
+| Domains | `lexcor.com` is the site of a firm of that name (finance, United Kingdom); `.net` is registered; `.de`, `.org`, `.eu`, `.io` without name servers |
+| GitHub | a user account "lexcor" with two lists of passwords from breaches (58 and 14 stars, last changed 2020); otherwise legal projects ("LexCorpus") |
+| DPMAregister | no mark "lexcor"; a German mark LEXCORP is registered (its goods were not read); the other hits are FLEXCORE marks |
+| TMview | LEXCOR registered in the United Kingdom (2026, class 36), in Peru (class 9) and applied for in Canada (classes 1, 6, 17, 19); **LEXCOR AI**, United Kingdom, 2026, classes 9 and 45; LEXCORP in Mexico, Peru, Argentina and Turkey |
+| Web | several firms of the name: an investment manager in London, a law firm in Canada, a commodity trader in Hong Kong, an importer in Peru, a line of roofing products; and **"LexCor AI"**, a case-management program for criminal defence lawyers, offered in two app stores |
+
+What to know: no mark of the name in the EU or in Germany. In the United Kingdom the word is a registered
+mark of this year, once for financial services and once, as "LEXCOR AI", for software (class 9) and legal
+services; that program exists and is sold. The name is used by more firms than any other candidate looked at
+here, none of them in medicine. On GitHub the account name is taken, so the repository cannot live under an
+organisation of that name.
+
+Looked at before: **lexkern** (free on PyPI, npm and crates.io, no repository on GitHub, no hit on the web, no
+mark; `lexkern.com` is registered). Rejected: lexcore (many FLEXCORE marks, 49 repositories, five domains
+taken), lextag (a registered EU mark "Lextag"), lexbasis (a registered mark contains it), lexmatch (taken on
+PyPI and crates.io).
+
 ## Candidates looked at before
 
 Checked the same way on the same day:

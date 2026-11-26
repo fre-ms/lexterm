@@ -6,8 +6,8 @@
 Finds medical terms in German clinical text and assigns them the codes of the terminologies they belong to,
 for a person to confirm.
 
-The project is at the design stage: there is no code here yet. The [design](docs/design.md) says what is to be
-built and in which order.
+The project is at the design stage: there is no library here yet, only a prototype of the matcher inside the
+bench. The [design](docs/design.md) says what is to be built and in which order.
 
 ## What it is to do
 
@@ -31,6 +31,8 @@ through the FHIR terminology interface and recognises terms for other programs.
   server, stages.
 - [Survey of open-source tools](reports/Bestandsaufnahme%20quelloffener%20Werkzeuge.md) (in German): terminology
   servers, recognisers, review tools and German term sources, and what follows for this project.
+- [Trial of existing recognisers](reports/Erprobung%20vorhandener%20Erkenner.md) (in German): twelve
+  recognisers measured with one German dictionary, and the [bench](bench/) that measured them.
 - [Name search](docs/name-search-2026-11-26.md).
 
 ## Licence
