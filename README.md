@@ -7,7 +7,8 @@ Finds medical terms in German clinical text and assigns them the codes of the te
 for a person to confirm.
 
 The project is at the design stage: there is no library here yet, only a prototype of the matcher inside the
-bench. The [design](docs/design.md) says what is to be built and in which order.
+bench. The [design](docs/design.md) says what is to be built and in which order. What lexterm shares with its
+sibling lexident (identifying information) is designed as a common core, lexcor, in a repository of its own.
 
 ## What it is to do
 

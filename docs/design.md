@@ -3,7 +3,13 @@
 
 # lexterm: design
 
-Draft 0.2, 26 November 2026. Nothing of this is built yet but a prototype of the matcher and a bench. Two
+Draft 0.3, 26 November 2026. Nothing of this is built yet but a prototype of the matcher and a bench.
+
+**Since 0.3 the parts lexterm shares with its sibling lexident are designed in lexcor's repository**, and that
+design is the one in force for them: packages and the store (here sections 4.1, 4.4 and 4.5), recognition
+(5.2 to 5.5), the annotation document (6), the windows (7), client and server (9 and 10). What remains
+lexterm's own is what is medical: its packages and importers (4.2 and 4.3), its table of spelling variants,
+its output (8). The sections below are kept until lexcor is built, so that nothing is lost on the way. Two
 reports (in German) say what exists already and why the parts below are built or taken over: the
 [survey of open-source tools](../reports/Bestandsaufnahme%20quelloffener%20Werkzeuge.md) and the
 [trial of existing recognisers](../reports/Erprobung%20vorhandener%20Erkenner.md).
@@ -184,10 +190,11 @@ every one of them becomes an assignment. lexterm does not choose between them.
   the trial saw it turn "Papille" into "Pupille", "Gewicht" into "Gesicht" and "Kollegen" into "Kollagen". At
   most it is a source of proposals for text that comes from text recognition, each marked as fitting only
   roughly and none in force until a person confirms it.
-- **Other recognisers**: a recogniser is anything that takes a text and the packages and returns places with
-  codes. Every assignment names the recogniser that made it (section 6), so that MedCAT with a model trained on
-  German text, or another learning recogniser, can be added as a second source of proposals without being
-  shipped with lexterm and without changing anything else.
+- **Recognisers that learn** are not ruled out by the two conditions of section 1, which bind the core; they
+  are planned from the start as modules that are switched on. A recogniser is anything that takes a text and
+  the packages and returns places with codes, and every assignment names the recogniser that made it
+  (section 6). What such a module learns from is what the annotation document collects: the assignments a
+  person confirmed and rejected. lexcor's design (section 4.7) names the candidates.
 
 ## 6 The annotation document
 
@@ -393,7 +400,7 @@ freely available German texts with a checked truth.
 2. **The user's vocabulary today** lives in PseudonyMed's pseudonym database. It moves to lexterm's store once,
    by a command; PseudonyMed keeps no second copy.
 3. **German MeSH**: whether its terms of use allow bundling.
-4. **The common core** (section 12): one repository for the three packages or three repositories, and which
-   of the three is built first.
+4. **The common core** (section 12): decided on 26 November 2026, three repositories (lexcor, lexterm,
+   lexident); the core is built first. The server (section 10) is planned and built when a program needs it.
 5. **Context** (5.5): the licence of the German trigger list, and whether rules of lexterm's own are better.
 6. **The order of stages 0.4 and 0.5**, if a program needs the server early.

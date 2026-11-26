@@ -308,7 +308,8 @@ def run(testset_path: Path, results: Path, names: list[str]) -> None:
 
 def report(results: Path) -> None:
     """Print the results as Markdown tables."""
-    rows = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(results.glob("*.json"))]
+    rows = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(results.glob("*.json"))
+            if not p.name.startswith(("corpus-", "texts-"))]
     good = [r for r in rows if "error" not in r]
     kinds = list(good[0]["kinds"])
     print("| Recogniser | " + " | ".join(kinds) + " | all |")

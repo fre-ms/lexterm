@@ -51,6 +51,142 @@ class Prototype:
         return self.matcher.tag(text)
 
 
+STOP_WORDS = frozenset("""
+aber alle allem allen aller alles als also am an ander andere anderem anderen anderer anderes
+auch auf aus bei beim bin bis bist da damit dann das dass dem den denn der des dessen die dies
+diese diesem diesen dieser dieses doch dort du durch ein eine einem einen einer eines er es
+etwas euch euer für gegen hat hatte hatten hier hin hinter ich ihm ihn ihnen ihr ihre ihrem
+ihren ihrer im in indem ins ist jede jedem jeden jeder jedes jene kann kein keine keinem keinen
+keiner man mit muss nach nicht nichts noch nun nur ob oder ohne sehr sein seine seinem seinen
+seiner sich sie sind so solche sondern sonst sowie über um und uns unter vom von vor war waren
+was weg weil weiter welche wenn wer werde werden wie wieder will wir wird wo zu zum zur zwar
+zwischen bzw ca ggf sog vgl z b d h u a o g
+""".split())
+SPELLINGS = (("ph", "f"), ("th", "t"), ("rh", "r"), ("ae", "ä"), ("oe", "ö"), ("ue", "ü"),
+             ("ß", "ss"), ("ce", "ze"), ("ci", "zi"), ("cy", "zy"), ("cä", "zä"), ("c", "k"),
+             ("y", "i"))
+
+
+def folded(word: str) -> str:
+    """A word with the spellings German medicine has side by side made one: c with k and z,
+    ph with f, th with t, umlauts written out or not."""
+    word = word.casefold()
+    for old, new in SPELLINGS:
+        word = word.replace(old, new)
+    return word
+
+
+class PrototypeFolded:
+    """lexterm's rules with spelling variants folded by rule ("Colitis" finds "Kolitis")."""
+
+    name = "lexterm prototype + spelling rule"
+
+    def build(self, entries: Entries) -> None:
+        from proto import Matcher, only_as_written
+        self.fold = {}
+        for term, _code in entries:
+            if not only_as_written(term):
+                self.fold.setdefault(" ".join(folded(w) for w in term.split()), term)
+        self.matcher = Matcher(entries)
+        self.by_fold = Matcher([(" ".join(folded(w) for w in term.split()), code)
+                                for term, code in entries if not only_as_written(term)])
+
+    def tag(self, text: str) -> list[Match]:
+        from proto import TOKEN
+        found = self.matcher.tag(text)
+        pieces, last = [], 0
+        for m in TOKEN.finditer(text):  # fold word by word so that positions stay the same
+            word = m.group(0)
+            same = folded(word)
+            pieces.append(text[last:m.start()] + (same if len(same) == len(word) else word))
+            last = m.end()
+        pieces.append(text[last:])
+        extra = [m for m in self.by_fold.tag("".join(pieces))
+                 if all(m[1] <= f[0] or m[0] >= f[1] for f in found)]
+        return sorted(found + extra)
+
+
+def trigrams(text: str) -> set[str]:
+    """The letter trigrams of a string, with marks for its beginning and end."""
+    padded = f"##{text}##"
+    return {padded[i:i + 3] for i in range(len(padded) - 2)}
+
+
+class SimString:
+    """Approximate dictionary matching after QuickUMLS: every run of up to five words that
+    passes its rules is looked up with SimString (letter trigrams, cosine) and the best,
+    longest matches that do not overlap are kept.  Abbreviations match only as written."""
+
+    name = "SimString 0.9"
+    threshold = 0.9
+
+    def build(self, entries: Entries) -> None:
+        from pysimstring import simstring
+
+        from proto import only_as_written
+        self.simstring = simstring
+        self.written: dict[str, set[str]] = {}
+        self.codes: dict[str, set[str]] = {}
+        for term, code in entries:
+            if only_as_written(term):
+                self.written.setdefault(term, set()).add(code)
+            else:
+                self.codes.setdefault(" ".join(term.lower().split()), set()).add(code)
+        self.path = str(Path(tempfile.mkdtemp(prefix="simstring")) / "terms.db")
+        writer = simstring.writer(self.path, 3, False, True)
+        for term in self.codes:
+            writer.insert(term)
+        writer.close()
+        self.reader = simstring.reader(self.path)
+        self.reader.measure = simstring.cosine
+        self.reader.threshold = self.threshold
+
+    def tag(self, text: str) -> list[Match]:
+        from proto import TOKEN
+        tokens = [(m.start(), m.end(), m.group(0)) for m in TOKEN.finditer(text)]
+        candidates = []
+        for i, (a, _b, first) in enumerate(tokens):
+            if first in self.written:
+                candidates.append((1.0, a, tokens[i][1], frozenset(self.written[first])))
+            if first.lower() in STOP_WORDS:
+                continue
+            for n in range(1, 6):
+                if i + n > len(tokens):
+                    break
+                b, last = tokens[i + n - 1][1], tokens[i + n - 1][2]
+                if "\n" in text[a:b] or last.lower() in STOP_WORDS:
+                    continue
+                query = " ".join(text[a:b].lower().split())
+                if len(query) < 4 or query.isdigit():
+                    continue
+                grams = trigrams(query)
+                best, codes = 0.0, set()
+                for term in self.reader.retrieve(query):
+                    other = trigrams(term)
+                    score = len(grams & other) / (len(grams) * len(other)) ** 0.5
+                    if score > best:
+                        best, codes = score, set(self.codes[term])
+                    elif score == best:
+                        codes |= self.codes[term]
+                if codes:
+                    candidates.append((best, a, b, frozenset(codes)))
+        kept: list[Match] = []
+        for _score, a, b, codes in sorted(candidates, key=lambda c: (-c[0], -(c[2] - c[1]))):
+            if all(b <= other[0] or a >= other[1] for other in kept):
+                kept.append((a, b, codes))
+        return sorted(kept)
+
+
+class SimString08(SimString):
+    name = "SimString 0.8"
+    threshold = 0.8
+
+
+class SimString07(SimString):
+    name = "SimString 0.7"
+    threshold = 0.7
+
+
 class FlashText:
     """FlashText as it comes: letters outside ASCII end a word."""
 
@@ -241,9 +377,10 @@ class MedCatDict(MedCat):
 
 
 class QuickUmls:
-    """QuickUMLS (the fork kept by medspaCy) over a UMLS folder written from the dictionary."""
+    """QuickUMLS (the original under Python 3.11, or medspaCy's fork) over a UMLS folder written
+    from the dictionary."""
 
-    name = "QuickUMLS (medspaCy fork)"
+    name = "QuickUMLS 1.4"
 
     def build(self, entries: Entries) -> None:
         import subprocess
@@ -298,7 +435,9 @@ class QuickUmls:
 def available() -> dict[str, type]:
     """The recognisers whose libraries can be imported here."""
     wanted = {
-        "proto": (Prototype, None), "flashtext": (FlashText, "flashtext"),
+        "proto": (Prototype, None), "proto-fold": (PrototypeFolded, None),
+        "simstring-0.9": (SimString, "pysimstring"), "simstring-0.8": (SimString08, "pysimstring"),
+        "simstring-0.7": (SimString07, "pysimstring"), "flashtext": (FlashText, "flashtext"),
         "flashtext-de": (FlashTextGerman, "flashtext"), "aho": (AhoCorasick, "ahocorasick"),
         "spacy": (SpacyPhrase, "spacy"), "iamsystem": (Iamsystem, "iamsystem"),
         "iamsystem-stem": (IamsystemStem, "iamsystem"),

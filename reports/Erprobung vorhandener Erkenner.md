@@ -22,9 +22,10 @@ Ergebnis muss sich als Programm paketieren lassen.
 3. **MedCAT bringt ohne trainiertes Modell nichts für Deutsch.** Es findet 63 %, kennt keine Endungen und ist
    rund 240-mal langsamer als der Prototyp. Seine Stärke, Mehrdeutigkeiten aus dem Zusammenhang aufzulösen,
    setzt ein Training auf deutschen Texten voraus, das es nicht fertig gibt.
-4. **QuickUMLS und xMEN scheiden nach den Kriterien aus.** QuickUMLS lässt sich im Original hier nicht
-   installieren, braucht ein Sprachmodell und lädt beim Start Daten aus dem Netz nach. xMEN belegt 1,1 GB und
-   lässt sich nach frischer Installation nicht einmal laden.
+4. **QuickUMLS und xMEN sind kein Ersatz für den Kern.** QuickUMLS läuft (unter Python 3.11; unter 3.12
+   scheitert nur eine veraltete Abhängigkeit), findet auf Deutsch aber weniger als der Prototyp, braucht ein
+   Sprachmodell und lädt beim Start Daten aus dem Netz nach. xMEN belegt 1,1 GB und lässt sich nach frischer
+   Installation nicht einmal laden. Was sich aus QuickUMLS lernen lässt, steht in Abschnitt 6.
 5. **Auf echtem deutschem Fachtext findet jedes Wörterbuch-Verfahren weniger als die Hälfte.** Im
    Mantra-Korpus (von Menschen annotiert) findet der Prototyp mit dem freien Wörterbuch 38 % der Stellen und
    ordnet 20 % der richtigen Kennung zu; das beste Verfahren kommt auf 43 % und 23 %. Die Decke ist das
@@ -73,7 +74,7 @@ Richtig zugeordnete Stellen; die letzte Spalte über alle 947.
 | iamsystem, Endungen + ein Schreibfehler | 150 | 100 | 150 | 100 | 132 | 93 | 100 | **100** | **98 %** |
 | iamsystem, Endungen | 150 | 100 | 150 | 100 | 111 | 7 | 100 | 0 | 76 % |
 | EDS-NLP, unscharf (SimString) | 150 | 100 | 150 | 100 | 32 | 42 | 100 | 7 | 72 % |
-| QuickUMLS (Ableger von medspaCy) | 150 | 100 | 150 | 100 | 62 | 7 | 100 | 0 | 71 % |
+| QuickUMLS (Original und Ableger von medspaCy, gleiches Ergebnis) | 150 | 100 | 150 | 100 | 62 | 7 | 100 | 0 | 71 % |
 | iamsystem, wie geliefert | 150 | 100 | 150 | 100 | 0 | 7 | 100 | 0 | 64 % |
 | EDS-NLP, genau | 150 | 100 | 150 | 100 | 0 | 7 | 100 | 0 | 64 % |
 | spaCy PhraseMatcher | 150 | 100 | 150 | 100 | 0 | 7 | 100 | 0 | 64 % |
@@ -130,7 +131,7 @@ Was hinter den Zahlen steht:
 | spaCy 3.8 (PhraseMatcher) | MIT | 44 Pakete | nein | PseudonyMed paketiert spaCy bereits |
 | EDS-NLP 0.24 | BSD-3 | 72 Pakete, darunter pandas und pyarrow | nein | nicht gebaut; schwer |
 | MedCAT 2.10 | Apache-2.0 | 29 Pakete (mit spaCy 53); das Zusatzmodul für Verneinung zieht PyTorch nach | nein für den Kern | 227 MB, läuft, wenn alle Teile von MedCAT ausdrücklich mitgepackt werden |
-| QuickUMLS 1.4 (Original) | MIT | **scheitert**: die Abhängigkeit `leveldb` lässt sich auf Apple Silicon mit Python 3.12 nicht bauen | nein | entfällt |
+| QuickUMLS 1.4.2 (Original) | MIT | unter Python 3.11 ohne Weiteres; unter Python 3.12 scheitert der Bau der Abhängigkeit `leveldb` (Stand 2019), die eine dort entfernte Funktion benutzt, obwohl QuickUMLS sie in der Voreinstellung gar nicht braucht | nein | nicht gebaut; verlangt wie der Ableger ein Sprachmodell und lädt NLTK-Daten nach |
 | QuickUMLS (Ableger `medspacy-quickumls`) | MIT | geht; verlangt das spaCy-Modell für Deutsch und lädt beim Start die NLTK-Stoppwörter aus dem Netz in den Benutzerordner | nein | nicht gebaut; das Nachladen widerspricht dem Betrieb ohne Netz |
 | xMEN 1.0.8 | Apache-2.0 | 94 Pakete, 1,1 GB mit PyTorch und FAISS; **lässt sich danach nicht laden** (NumPy 1.26 gegen pyarrow, das NumPy 2 verlangt) | läuft laut Anleitung auch ohne Grafikkarte, voreingestellt mit | scheidet aus |
 
@@ -210,7 +211,105 @@ Auch der Prototyp markiert Unerwünschtes: „Zeit“, „Luft“, „stehen“ 
 Treffern, weil das Wörterbuch sie als Konzepte führt. Das ist keine Frage des Erkenners, sondern der Auswahl
 und Pflege der Pakete.
 
-## 6 Was sich übernehmen lässt
+## 6 QuickUMLS, SimString und MedCAT genauer
+
+Nachtrag vom selben Tag, auf die Frage, was sich aus den Verfahren lernen lässt. Beide Aufsätze sind im Volltext
+gelesen: Soldaini und Goharian, „QuickUMLS: a fast, unsupervised approach for medical concept extraction“
+(MedIR 2016), und Okazaki und Tsujii, „Simple and Efficient Algorithm for Approximate Dictionary Matching“
+(Coling 2010).
+
+### 6.1 Was die Aufsätze sagen
+
+- **QuickUMLS** bildet zu jedem Wort alle Wortfolgen bis fünf Wörter, verwirft ungültige (Beginn oder Ende mit
+  Artikel, Präposition oder Konjunktion; ein einzelnes Stoppwort; eine Zahl allein; über eine Satzgrenze
+  hinweg), sucht zu jeder gültigen Folge ähnliche Wörterbucheinträge und behält am Ende die besten, die sich
+  nicht überlappen (höchste Ähnlichkeit, bei Gleichstand die längere Folge).
+- **SimString** liefert dafür die Suche: Jeder Eintrag wird in Buchstaben-Dreiergruppen zerlegt, und das
+  Verfahren CPMerge findet exakt alle Einträge, deren Ähnlichkeit (Jaccard, Kosinus, Dice) über einer Schwelle
+  liegt, ohne das ganze Wörterbuch durchzugehen: 1 ms je Anfrage bei 13,6 Millionen Einträgen, 20 ms beim UMLS.
+- **Die Zahlen des QuickUMLS-Aufsatzes, englische klinische Notizen, vollständiges UMLS** (6 Millionen
+  Einträge): mit genauer Übereinstimmung Genauigkeit 0,67 und Trefferquote 0,54 (Korpus i2b2) bzw. 0,87 und
+  0,55 (THYME); mit Schwelle 0,7 steigt die Trefferquote auf 0,66 bzw. 0,67, die Genauigkeit fällt auf 0,60
+  bzw. 0,78. cTAKES liegt bei Trefferquote 0,53 bis 0,55. **Auch mit einem vollständigen Wörterbuch findet ein
+  Wörterbuch-Verfahren also nur gut die Hälfte bis zwei Drittel.** Unsere 38 bis 48 % mit 45.000 freien
+  Begriffen sind daran gemessen nicht aus der Art.
+- **Der Rat des SimString-Aufsatzes:** Kandidaten schnell und großzügig sammeln, dann jeden mit einem
+  strengeren, fachlichen Maß prüfen.
+
+### 6.2 Nachgemessen: SimString auf deutschem Text
+
+Im Prüfstand nachgebaut (`simstring-0.9`, `-0.8`, `-0.7`: Wortfolgen bis fünf Wörter nach den Regeln von
+QuickUMLS, Suche mit `pysimstring`, Kosinus über Dreiergruppen), dazu eine feste Schreibregel
+(`proto-fold`: c mit k und z, ph mit f, th mit t).
+
+| Verfahren | konstruiert: zugeordnet | dort Fehlalarme | Mantra: gefunden | Mantra: zugeordnet | Mantra: an annotierter Stelle |
+|---|---:|---:|---:|---:|---:|
+| Prototyp | 89 % | 0 | 38 % | 20 % | 79 % |
+| Prototyp mit Schreibregel | 89 % | 0 | 38 % | 20 % | 79 % |
+| SimString, Schwelle 0,9 | 77 % | 0 | 35 % | 19 % | 80 % |
+| SimString, Schwelle 0,8 | 83 % | 0 | 47 % | 22 % | 68 % |
+| SimString, Schwelle 0,7 | 90 % | 253 | 62 % | 23 % | 56 % |
+
+- **Die unscharfe Suche findet mehr Stellen, aber nicht mehr richtige Kennungen.** Bei Schwelle 0,7 sind 62 %
+  der annotierten Stellen markiert, zugeordnet aber nur 23 % (Prototyp 20 %). Was hinzukommt, hängt fast immer
+  am falschen Begriff.
+- **Auf den GraSCCo-Briefen** bringt schon Schwelle 0,9 Zuordnungen wie „Mobilisation“ zu „Immobilisation“,
+  „brauchen“ zu „Rauchen“, „Einbruch“ zu „Armbruch“; Schwelle 0,8 bringt 809 zusätzliche Stellen, darunter
+  39-mal „Chemotherapie“ als „Photochemotherapie“, „Zeichen“ als „Eiche“, „Klaus“ als „Laus“.
+- **Warum es im Aufsatz gelingt und hier nicht:** Mit einem vollständigen Wörterbuch gewinnt meist der genaue
+  Eintrag, die unscharfe Suche füllt nur Lücken. Mit einem dünnen Wörterbuch bekommt jedes unbekannte Wort
+  seinen nächsten Nachbarn. Dazu kommt das Deutsche: Vorsilben und Zusammensetzungen ändern die Bedeutung bei
+  hoher Ähnlichkeit der Zeichen.
+- **Die feste Schreibregel** bringt auf den Briefen 17 zusätzliche Stellen, fast alle richtig („Colitis“,
+  „Lactulose“, „Vasculitis“, „Zytokeratin“, „Metoklopramid“).
+
+### 6.3 MedCAT
+
+Gemessen wurde MedCAT 2.10.1 aus dem neuen Sammel-Repo `CogStack/cogstack-nlp` (so nennt es die Paketangabe);
+das alte Repo `CogStack/MedCAT` ist archiviert. Ohne trainiertes Modell ist es ein Wörterbuch-Erkenner ohne
+deutsche Regeln. Seine Besonderheit ist das Lernen, und zwar ohne PyTorch im Kern:
+
+- **selbstüberwacht** aus unbeschrifteten Texten: Aus eindeutigen Namen lernt es, in welcher Umgebung ein
+  Konzept steht, und löst damit mehrdeutige Namen auf;
+- **aus den Bestätigungen und Korrekturen eines Menschen**, wie sie seine Prüfoberfläche ausgibt.
+
+Beides braucht Wortvektoren für die Sprache der Texte; fertige deutsche habe ich nicht gefunden, man müsste sie
+aus deutschen Fachtexten rechnen. Das Lernen hebt die Genauigkeit bei mehrdeutigen Namen, nicht die Trefferquote:
+Finden kann MedCAT nur, was im Wörterbuch steht. Gemessen ist das hier nicht.
+
+### 6.4 Wie oft ein Begriff mehrere Bedeutungen hat
+
+Ein lernender Erkenner wie MedCAT wählt unter mehreren Bedeutungen. Wie oft das bei uns vorkommt, mit dem freien
+Wörterbuch:
+
+- In den 62 GraSCCo-Briefen haben 24 von 2.898 erkannten Stellen mehrere Bedeutungen, also 1 % („PET“, „ASS“).
+- Im Mantra-Korpus sind von 407 gefundenen Stellen 191 nicht der gewählten Kennung zugeordnet. Bei 73 kennt
+  Wikidata keine UMLS-Kennung zum Begriff, bei 110 hat der Begriff eine einzige Bedeutung, die Annotatoren haben
+  aber eine andere, verwandte Kennung gewählt, und nur bei 8 standen mehrere Bedeutungen zur Wahl.
+- Dagegen werden 675 der 1.082 annotierten Stellen (62 %) gar nicht gefunden.
+
+Die Lücke liegt also beim Finden, nicht beim Auswählen. Mit mehr Paketen wird die Mehrdeutigkeit zunehmen;
+heute ist sie das kleinere Problem.
+
+### 6.5 Was daraus für den Entwurf folgt
+
+1. **Erkennung in vier austauschbaren Stufen:** gültige Wortfolgen bilden, Kandidaten holen, jeden Kandidaten
+   prüfen und bewerten, Überlappungen auflösen. Das ist der Aufbau von QuickUMLS und zugleich die Schnittstelle,
+   an der ein anderer oder lernender Erkenner einsteigt.
+2. **Die Regeln für gültige Wortfolgen** übernehmen: Fenster von fünf Wörtern (so groß ist es bei uns schon),
+   kein Beginn oder Ende mit Funktionswort, nie ein einzelnes Stoppwort, nie eine Zahl allein, nicht über eine
+   Satzgrenze. Das verhindert „hat“, „sowie“ und „als“ grundsätzlich, mit einer eigenen kleinen Stoppwortliste
+   statt eines Sprachmodells.
+3. **Jede Zuordnung trägt Art und Wert der Übereinstimmung** (genau, gebeugt, Schreibvariante, ungefähr mit
+   Ähnlichkeit), und die Auflösung von Überlappungen ordnet danach: genau vor ungefähr, dann die längere Folge.
+4. **Unscharfe Suche nur dort, wo ein Mensch auswählt:** im Prüffenster („diese Stelle wurde nicht erkannt:
+   ähnliche Begriffe?“), in der Paketpflege (Dubletten) und in der Begriffssuche des Servers. SimString ist
+   dafür die richtige Technik; als selbsttätige Zuordnung taugt sie mit unseren Paketen nicht.
+5. **Lernen als zuschaltbares Modul**, von Anfang an mitgedacht: Die Annotationsdatei mit bestätigten und
+   verworfenen Zuordnungen ist genau das, woraus MedCAT lernt. Das Modul liest Pakete und Bestätigungen, schlägt
+   bei mehrdeutigen Begriffen die wahrscheinlichste Bedeutung vor und läuft ohne Grafikkarte.
+
+## 7 Was sich übernehmen lässt
 
 - **Aus iamsystem die Abkürzungsliste** („BB“ steht für „Blutbild“) als Idee für die Pakete, und die
   Schreibvarianten mit c, k und z als feste Regel. **Die allgemeine Schreibfehlertoleranz nicht** als
@@ -224,21 +323,21 @@ und Pflege der Pakete.
   einem selbst trainierten deutschen Modell später zuschalten, ohne dass lexterm es mitliefert. Der Prüfstand
   ist schon so gebaut: jedes Werkzeug hinter denselben zwei Aufrufen.
 
-## 7 Was diese Erprobung nicht zeigt
+## 8 Was diese Erprobung nicht zeigt
 
 - **Wie gut die Erkennung auf echten Arztbriefen mit besseren Paketen wäre.** Gemessen ist nur das freie
   Wikidata-Wörterbuch. Der Deutsche MeSH, die deutsche SNOMED-CT-Ausgabe, die Alpha-ID-SE und eine Liste von
   Handelsnamen sollten die Trefferquote deutlich heben; wie weit, ist nicht gemessen. Ein von Menschen
   annotiertes Korpus deutscher Arztbriefe mit Konzeptkennungen habe ich frei zugänglich nicht gefunden.
 - **Was lernende Verfahren hier erreichen.** Veröffentlichte Systeme mit Sprachmodellen berichten für dieses
-  Korpus höhere Zuordnungsraten; das habe ich weder nachgelesen noch nachgemessen, und sie fallen unter die
-  Ausschlusskriterien.
+  Korpus höhere Zuordnungsraten; das habe ich weder nachgelesen noch nachgemessen. Sie sind als zuschaltbares
+  Modul vorgesehen (Abschnitt 6.5); ausgeschlossen ist nur, dass der Kern besondere Hardware braucht.
 - **Mehrdeutigkeit.** Wo ein Begriff mehrere Bedeutungen hat, liefert der Prototyp alle. MedCATs Auflösung aus
   dem Zusammenhang konnte mangels deutschem Modell nicht gemessen werden.
 - **Terminologieserver.** Hermes und Snowstorm Lite brauchen eine SNOMED-CT-Ausgabe, die nur mit Ihrer
   Affiliate-Lizenz über MLDS zu laden ist.
 
-## 8 Wiederholen
+## 9 Wiederholen
 
 ```
 python bench/bench.py make  <fachklassen_de.csv.gz>  testset.json
