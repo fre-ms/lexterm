@@ -195,6 +195,19 @@ every one of them becomes an assignment. lexterm does not choose between them.
   the packages and returns places with codes, and every assignment names the recogniser that made it
   (section 6). What such a module learns from is what the annotation document collects: the assignments a
   person confirmed and rejected. lexcor's design (section 4.7) names the candidates.
+- **Search by meaning** is the first of them that was measured (the trial, section 7): a multilingual model
+  trained on the names of concepts gives a run of words the nearest name of a package. As a source of
+  assignments it fails below a very high nearness ("Schilddrüsenkarzinom" as "Schilddrüsenadenom"). As a source
+  of proposals for a person it is strong: where the concept is in the package at all, the right name is among
+  the five nearest in nine cases of ten. And it works across languages as well as within German, which opens
+  English packages to German text: with English names the share of places linked in the annotated corpus rose
+  from 32 % to 41 %, because more concepts were in the package at all. It is built with lexcor 0.3 as a module
+  that is switched on and proposes in the review window, never as a source of assignments (decided on
+  26 November 2026). Its model (1.1 GB) is fetched by the user; the model's page states no licence, while its
+  English sibling by the same authors is under Apache 2.0, and this is settled before anything is passed on.
+- **Terms of another language than the text** are not looked for by the rules: with English names in the
+  dictionary the rules tagged "gut", "fast" and "Berlin" in German letters. Every term carries its language,
+  and a package in another language reaches a text only through the search by meaning.
 
 ## 6 The annotation document
 

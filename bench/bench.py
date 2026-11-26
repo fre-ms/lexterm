@@ -7,6 +7,7 @@
     python bench.py report results/
     python bench.py corpus BRAT_FOLDER QID_CUI.csv DICTIONARY results/ --tools proto
     python bench.py texts TEXT_FOLDER DICTIONARY results/ --tools proto
+    python bench.py link BRAT_FOLDER QID_CUI.csv DICTIONARY results/ [--lower]
 
 The dictionary is a CSV of term, class and code (PseudonyMed's ``fachklassen_de.csv.gz``,
 German labels from Wikidata, CC0).  The test set is made from it, so the truth is known by
@@ -20,7 +21,9 @@ same dictionary.  Run one recogniser per call to measure its time and memory alo
 identifiers (the German part of the Mantra GSC); the dictionary's Wikidata codes are taken
 to UMLS through a table of item and identifier (Wikidata's property P2892).  ``texts``
 counts what each recogniser tags in a folder of plain texts that carry no annotation
-(GraSCCo).  Neither corpus is part of this repository.
+(GraSCCo).  Neither corpus is part of this repository.  ``link`` leaves the finding aside: it
+takes the places people annotated and asks how many of them are assigned to the right
+concept by spelling, by the prototype's rules and by a search by meaning (``semantic.py``).
 """
 
 from __future__ import annotations
@@ -421,10 +424,95 @@ def texts(folder: Path, dictionary: Path, results: Path, names: list[str]) -> No
             {"tool": tool.name, "documents": len(documents),
              "characters": sum(len(d) for d in documents), "tagged": sum(len(s) for s in found),
              "seconds": round(seconds, 2), "spans": found,
-             "most": sorted(words.items(), key=lambda item: -item[1])[:60]},
+             "most": sorted(words.items(), key=lambda item: -item[1])[:60],
+             "matched": getattr(tool, "matched", [])},
             ensure_ascii=False), encoding="utf-8")
         print(f"{tool.name}: {sum(len(s) for s in found)} places in {len(documents)} texts, "
               f"{seconds:.2f} s")
+
+
+THRESHOLDS = (0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 0.98)
+
+
+def link(folder: Path, table: Path, dictionary: Path, results: Path, lower: bool) -> None:
+    """Assign the annotated places of a corpus, each looked up alone: by spelling, by the
+    prototype's rules, and by meaning at a range of thresholds."""
+    import semantic
+    from proto import Matcher
+    entries = [(" ".join(term.split()), code) for term, code in load_dictionary(dictionary)]
+    mapping = umls_of(table)
+    reachable = {cui for _term, code in entries for cui in mapping.get(code, ())}
+    listed: dict[str, set[str]] = {}
+    for term, code in entries:
+        listed.setdefault(term.lower(), set()).update(mapping.get(code, ()))
+    matcher = Matcher(entries)
+    by_name: dict[str, set[str]] = {}
+    for term, code in entries:
+        if not only_as_written(term):
+            by_name.setdefault(term, set()).update(mapping.get(code, ()))
+    names = sorted(by_name)
+    index = semantic.index(names, lower)
+    places = [(" ".join(text[a:b].split()), cuis)
+              for _part, text, gold in read_brat(folder) for a, b, cuis in gold]
+    model = semantic.embedder()
+    before = (model.strings, model.seconds)
+    scores, numbers = index.nearest([surface for surface, _cuis in places], k=5)
+    rate = (model.strings - before[0]) / (model.seconds - before[1])
+    rows = []
+    for (surface, cuis), near, which in zip(places, scores, numbers, strict=True):
+        hits = [codes for a, b, codes in matcher.tag(surface)
+                if overlap((a, b), (0, len(surface))) >= 0.5]
+        rows.append({
+            "surface": surface, "possible": bool(cuis & reachable),
+            "spelling": bool(listed.get(surface.lower(), set()) & cuis),
+            "rules": any(cuis & {c for code in codes for c in mapping.get(code, ())}
+                         for codes in hits),
+            "score": float(near[0]), "name": names[which[0]],
+            "same": names[which[0]].lower() == surface.lower(),
+            "first": bool(by_name[names[which[0]]] & cuis),
+            "five": any(by_name[names[n]] & cuis for n in which)})
+    total = len(rows)
+    steps = []
+    for threshold in THRESHOLDS:
+        said = [r for r in rows if r["score"] >= threshold]
+        both = [r for r in rows if r["rules"] or (r["score"] >= threshold and r["first"])]
+        steps.append({
+            "threshold": threshold, "assigned": len(said),
+            "right": sum(r["first"] for r in said),
+            "same name, other identifier": sum(r["same"] and not r["first"] for r in said),
+            "other name, concept in dictionary": sum(
+                not r["same"] and not r["first"] and r["possible"] for r in said),
+            "other name, concept not in dictionary": sum(
+                not r["same"] and not r["possible"] for r in said),
+            "right by rules or meaning": len(both)})
+    summary = {
+        "dictionary": dictionary.name, "names": len(names), "lower": lower, "places": total,
+        "concept in dictionary": sum(r["possible"] for r in rows),
+        "by spelling": sum(r["spelling"] for r in rows),
+        "by rules": sum(r["rules"] for r in rows),
+        "nearest name right": sum(r["first"] for r in rows),
+        "right among five nearest": sum(r["five"] for r in rows),
+        "index seconds": round(index.build_seconds, 1), "strings per second": round(rate),
+        "steps": steps,
+        "gained": sorted(((r["surface"], r["name"], round(r["score"], 3)) for r in rows
+                          if r["first"] and not r["rules"]), key=lambda x: -x[2])[:60],
+        "wrong": sorted(((r["surface"], r["name"], round(r["score"], 3), r["possible"])
+                         for r in rows if not r["first"] and not r["same"]),
+                        key=lambda x: -x[2])[:80],
+        "rows": rows}
+    results.mkdir(parents=True, exist_ok=True)
+    label = dictionary.name.split(".")[0] + ("-lower" if lower else "")
+    (results / f"link-{label}.json").write_text(
+        json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"{dictionary.name}: {len(names)} names, {total} places, concept in dictionary "
+          f"{summary['concept in dictionary']}, by spelling {summary['by spelling']}, by rules "
+          f"{summary['by rules']}, nearest name right {summary['nearest name right']}, among "
+          f"five {summary['right among five nearest']}; {round(rate)} strings/s")
+    print("| nearness from | assigned | right | same name, other identifier | other name, concept "
+          "in dictionary | other name, concept not in dictionary | right by rules or meaning |")
+    print("|---:|---:|---:|---:|---:|---:|---:|")
+    for step in steps:
+        print("| " + " | ".join(str(v) for v in step.values()) + " |")
 
 
 if __name__ == "__main__":
@@ -442,5 +530,8 @@ if __name__ == "__main__":
     elif command == "texts":
         chosen = sys.argv[sys.argv.index("--tools") + 1].split(",")
         texts(Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]), chosen)
+    elif command == "link":
+        link(Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]), Path(sys.argv[5]),
+             "--lower" in sys.argv)
     else:
         print(__doc__)

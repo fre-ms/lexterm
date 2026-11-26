@@ -51,6 +51,31 @@ class Prototype:
         return self.matcher.tag(text)
 
 
+class Lexcor:
+    """The recogniser of lexcor, the core that grew out of the prototype."""
+
+    name = "lexcor"
+    variants: tuple[tuple[str, str], ...] = ()
+
+    def build(self, entries: Entries) -> None:
+        from lexcor import Entry, Recogniser
+        self.recogniser = Recogniser(
+            (Entry(term, None, "bench", "", code, term, "", "", "synonym")
+             for term, code in entries), self.variants)
+
+    def tag(self, text: str) -> list[Match]:
+        return [(m.start, m.end, frozenset(a.code for a in m.assignments))
+                for m in self.recogniser.tag(text)]
+
+
+class LexcorVariants(Lexcor):
+    """lexcor with lexterm's table of spellings that stand side by side."""
+
+    name = "lexcor + spelling table"
+    variants = (("ph", "f"), ("th", "t"), ("rh", "r"), ("ce", "ze"), ("ci", "zi"), ("cy", "zy"),
+                ("cae", "zae"), ("c", "k"), ("y", "i"))
+
+
 STOP_WORDS = frozenset("""
 aber alle allem allen aller alles als also am an ander andere anderem anderen anderer anderes
 auch auf aus bei beim bin bis bist da damit dann das dass dem den denn der des dessen die dies
@@ -185,6 +210,79 @@ class SimString08(SimString):
 class SimString07(SimString):
     name = "SimString 0.7"
     threshold = 0.7
+
+
+def word_runs(text: str) -> list[tuple[int, int]]:
+    """Runs of up to five words in a line that neither begin nor end with a function word:
+    the rules QuickUMLS gives for what may be a term."""
+    from proto import TOKEN
+    tokens = [(m.start(), m.end(), m.group(0).lower()) for m in TOKEN.finditer(text)]
+    runs = []
+    for i, (a, _b, first) in enumerate(tokens):
+        if first in STOP_WORDS:
+            continue
+        for b, last in ((t[1], t[2]) for t in tokens[i:i + 5]):
+            if "\n" in text[a:b]:
+                break
+            if last not in STOP_WORDS and b - a >= 4 and not text[a:b].isdigit():
+                runs.append((a, b))
+    return runs
+
+
+class Meaning:
+    """Search by meaning behind the prototype: what the prototype finds stands; every other
+    run of words is turned into a vector by a model trained on the names of concepts
+    (``semantic.py``) and takes the nearest name of the dictionary when it is near enough.
+    Abbreviations match only as written, so they are no targets of the search."""
+
+    name = "prototype + meaning 0.9"
+    threshold = 0.9
+    lower = True  # names and runs in small letters: a little better on German text
+
+    def build(self, entries: Entries) -> None:
+        import semantic
+        from proto import Matcher, only_as_written
+        self.matcher = Matcher(entries)
+        codes: dict[str, set[str]] = {}
+        for term, code in entries:
+            if not only_as_written(term):
+                codes.setdefault(" ".join(term.split()), set()).add(code)
+        self.names = sorted(codes)
+        self.codes = [frozenset(codes[name]) for name in self.names]
+        self.index = semantic.index(self.names, self.lower)
+        self.matched: list[tuple[str, str, float]] = []
+
+    def tag(self, text: str) -> list[Match]:
+        found = self.matcher.tag(text)
+        runs = [(a, b) for a, b in word_runs(text)
+                if all(b <= f[0] or a >= f[1] for f in found)]
+        nearest = self.index.best([" ".join(text[a:b].split()) for a, b in runs])
+        candidates = []
+        for a, b in runs:
+            score, number = nearest[" ".join(text[a:b].split())]
+            if score >= self.threshold:
+                candidates.append((score, a, b, number))
+        kept: list[tuple[int, int, int, float]] = []
+        for score, a, b, number in sorted(candidates, key=lambda c: (-c[0], -(c[2] - c[1]))):
+            if all(b <= other[0] or a >= other[1] for other in kept):
+                kept.append((a, b, number, score))
+        self.matched += [(text[a:b], self.names[n], round(score, 3)) for a, b, n, score in kept]
+        return sorted(found + [(a, b, self.codes[n]) for a, b, n, _score in kept])
+
+
+class Meaning095(Meaning):
+    name = "prototype + meaning 0.95"
+    threshold = 0.95
+
+
+class Meaning085(Meaning):
+    name = "prototype + meaning 0.85"
+    threshold = 0.85
+
+
+class Meaning08(Meaning):
+    name = "prototype + meaning 0.8"
+    threshold = 0.8
 
 
 class FlashText:
@@ -436,6 +534,7 @@ def available() -> dict[str, type]:
     """The recognisers whose libraries can be imported here."""
     wanted = {
         "proto": (Prototype, None), "proto-fold": (PrototypeFolded, None),
+        "lexcor": (Lexcor, "lexcor"), "lexcor-variants": (LexcorVariants, "lexcor"),
         "simstring-0.9": (SimString, "pysimstring"), "simstring-0.8": (SimString08, "pysimstring"),
         "simstring-0.7": (SimString07, "pysimstring"), "flashtext": (FlashText, "flashtext"),
         "flashtext-de": (FlashTextGerman, "flashtext"), "aho": (AhoCorasick, "ahocorasick"),
@@ -444,6 +543,8 @@ def available() -> dict[str, type]:
         "iamsystem-fuzzy": (IamsystemFuzzy, "iamsystem"), "edsnlp": (EdsNlp, "edsnlp"),
         "edsnlp-simstring": (EdsNlpSimstring, "edsnlp"), "medcat": (MedCat, "medcat"),
         "medcat-dict": (MedCatDict, "medcat"), "quickumls": (QuickUmls, "quickumls"),
+        "meaning-0.95": (Meaning095, "transformers"), "meaning-0.9": (Meaning, "transformers"),
+        "meaning-0.85": (Meaning085, "transformers"), "meaning-0.8": (Meaning08, "transformers"),
     }
     found = {}
     for key, (cls, module) in wanted.items():
