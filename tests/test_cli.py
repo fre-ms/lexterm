@@ -55,3 +55,23 @@ def test_the_command_line_writes_the_annotation_document(
     document = json.loads(target.read_text(encoding="utf-8"))
     assert document["lexcor"] == 1 and document["made_with"] == f"lexterm {lexterm.__version__}"
     assert "Ramipril" in [m["exact"] for m in document["mentions"]]
+
+
+def test_the_command_line_gives_codeable_concepts(
+        files: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    from lexcor import load_annotation
+
+    target = files / "letter.lexterm.json"
+    assert main(["tag", str(files / "letter.txt"), "--annotation", str(target)]) == 0
+    capsys.readouterr()
+    assert main(["export", "fhir", str(target)]) == 0
+    assert json.loads(capsys.readouterr().out) == {"concepts": []}  # nothing confirmed yet
+    document = load_annotation(target)
+    document.confirm_all(bundled.WIKIDATA)
+    document.save(target)
+    assert main(["export", "fhir", str(target)]) == 0
+    concepts = json.loads(capsys.readouterr().out)["concepts"]
+    assert "Ramipril" in [c["codeableConcept"]["text"] for c in concepts]
+    assert all(c["codeableConcept"]["coding"][0]["userSelected"] for c in concepts)
+    assert main(["--language", "en", "export", "fhir", str(files / "missing.json")]) == 1
+    assert json.loads(capsys.readouterr().out)["error"] == "unreadable"

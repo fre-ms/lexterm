@@ -111,7 +111,8 @@ def test_the_annotation_document_keeps_a_persons_decisions(tmp_path: Path) -> No
     assert document.made_with == f"lexterm {lexterm.__version__}"
     assert document.packages == [{"url": bundled.WIKIDATA, "version": bundled.WIKIDATA_VERSION,
                                   "sha256": bundled.wikidata().sha256()}]
-    assert document.settings == {"packages": [], "classes": [], "language": "de"}
+    assert document.settings == {"packages": [], "classes": [], "language": "de",
+                                 "nested": False}
     assert [(n.id, n.exact) for n in document.mentions] == [("m1", "arterielle Hypertonie"),
                                                             ("m2", "Ramipril")]
     document.reject("m2")
@@ -126,3 +127,59 @@ def test_the_annotation_document_keeps_a_persons_decisions(tmp_path: Path) -> No
     assert [(n.exact, a.status) for n, a in moved.assignments(None)] == [
         ("Diabetes mellitus", "proposed"), ("arterielle Hypertonie", "confirmed"),
         ("Ramipril", "rejected")]
+
+
+def test_one_wording_is_coded_in_every_code_system_that_knows_it(tmp_path: Path) -> None:
+    from lexterm.export import codeable_concepts
+
+    icd = Package(url="http://fhir.de/CodeSystem/bfarm/icd-10-gm", version="2026", language="de",
+                  concepts=[Concept("I10", "Essentielle Hypertonie", "disorder", "",
+                                    [Term("Hypertonie", "de")])])
+    own = Package(url="https://example.org/CodeSystem/own", version="3", language="de",
+                  concepts=[Concept("HT", "Hypertonien", "note", "", [Term("Hypertonien", "de")])])
+    text = "Bekannte Hypertonien."
+    with lexterm.open_store(tmp_path / "lexterm.sqlite") as store:
+        store.add_package(icd)
+        store.add_package(own)
+        lexterm.install(store)
+        document = lexterm.annotate(text, store)
+    mention, = document.mentions
+    systems = [(a.system, a.code, a.kind) for a in mention.assignments]
+    assert ("http://fhir.de/CodeSystem/bfarm/icd-10-gm", "I10", "inflected") in systems
+    assert ("https://example.org/CodeSystem/own", "HT", "as written") in systems
+    assert any(system == bundled.WIKIDATA for system, _c, _k in systems)  # three code systems
+    assert codeable_concepts(document) == []  # nothing confirmed yet
+    document.confirm(mention.id, system=icd.url)
+    document.confirm(mention.id, system=bundled.WIKIDATA)
+    document.reject(mention.id, system=own.url)
+    concept, = codeable_concepts(document)
+    assert (concept["mention"], concept["start"], concept["end"]) == (mention.id, 9, 20)
+    codings = concept["codeableConcept"]["coding"]
+    assert concept["codeableConcept"]["text"] == "Hypertonien"
+    assert [c["system"] for c in codings] == [
+        "http://fhir.de/CodeSystem/bfarm/icd-10-gm", bundled.WIKIDATA]
+    assert codings[0] == {"system": "http://fhir.de/CodeSystem/bfarm/icd-10-gm",
+                          "version": "2026", "code": "I10",
+                          "display": "Essentielle Hypertonie", "userSelected": True}
+    assert len(codeable_concepts(document, together=False)) == 2
+    every, = codeable_concepts(document, ("proposed", "confirmed", "rejected"))
+    assert len(every["codeableConcept"]["coding"]) == 3
+    assert "userSelected" not in every["codeableConcept"]["coding"][-1]  # the rejected one
+
+
+def test_a_package_codes_the_shorter_wording_it_knows_inside_a_longer_mention(
+        tmp_path: Path) -> None:
+    icd = Package(url="https://example.org/icd", language="de", concepts=[
+        Concept("G20", "Morbus Parkinson", "disorder", "", [Term("Morbus Parkinson", "de")]),
+        Concept("G20.9", "Parkinson", "disorder", "", [Term("Parkinson", "de")])])
+    names = Package(url="https://example.org/eponyms", language="de", concepts=[
+        Concept("P1", "Parkinson", "eponym", "", [Term("Parkinson", "de")])])
+    with lexterm.open_store(tmp_path / "lexterm.sqlite") as store:
+        store.add_package(icd)
+        store.add_package(names)
+        text = "Bekannter Morbus Parkinson."
+        found = [(m.text, [a.code for a in m.assignments]) for m in lexterm.tag(text, store)]
+        assert found == [("Morbus Parkinson", ["G20"]), ("Parkinson", ["P1"])]
+        nested = [(m.text, [a.code for a in m.assignments])
+                  for m in lexterm.tag(text, store, nested=True)]
+        assert nested == [("Morbus Parkinson", ["G20"]), ("Parkinson", ["P1", "G20.9"])]

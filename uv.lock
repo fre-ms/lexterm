@@ -90,12 +90,12 @@ wheels = [
 
 [[package]]
 name = "lexcor"
-version = "0.2.0"
-source = { git = "https://github.com/fre-ms/lexcor?tag=v0.2.0#43c8c62161f8d38d17d7cefebeb4191e473a5cba" }
+version = "0.2.1"
+source = { git = "https://github.com/fre-ms/lexcor?tag=v0.2.1#28fa1c2534e0f08223a7202080462b52fefd7ea7" }
 
 [[package]]
 name = "lexterm"
-version = "0.2.0"
+version = "0.2.1"
 source = { editable = "." }
 dependencies = [
     { name = "lexcor" },
@@ -109,7 +109,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "lexcor", git = "https://github.com/fre-ms/lexcor?tag=v0.2.0" }]
+requires-dist = [{ name = "lexcor", git = "https://github.com/fre-ms/lexcor?tag=v0.2.1" }]
 
 [package.metadata.requires-dev]
 dev = [

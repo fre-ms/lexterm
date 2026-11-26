@@ -175,9 +175,16 @@ is. For an assignment that is not good enough: a part of a word is not the conce
 
 ### 5.4 Overlaps and several meanings
 
-Where terms overlap, the longest is the mention ("Morbus Parkinson", not "Parkinson" inside it); shorter ones
-inside it can be asked for. Where one term stands in several packages, or for several concepts of one package,
-every one of them becomes an assignment. lexterm does not choose between them.
+One wording is coded in every code system that knows it. Where one term stands in several packages, or for
+several concepts of one package, every one of them becomes an assignment of the mention; lexterm does not
+choose between them, a person does in the review.
+
+Every package answers for itself. Where a package's own terms overlap, the longest is its mention ("Morbus
+Parkinson", not "Parkinson" inside it); its shorter ones inside can be asked for (`nested`). Packages do not
+shut each other out: a package that knows only "Parkinson" codes it inside "Morbus Parkinson", the mention of
+another package, so mentions of different packages may overlap. And a package that lists the inflected form as
+written does not keep the packages that list the base form from assigning their codes; every assignment says by
+which kind of match it was made.
 
 ### 5.5 Later: context and other recognisers
 
@@ -273,11 +280,16 @@ interface is German or English.
 
 ### 8.1 FHIR
 
-One `CodeableConcept` per mention and meaning, with `text` = the wording in the document. Several codings stand
-in one CodeableConcept **only where the packages are known to mean the same concept** (a mapping the packages
-carry, such as identifiers shared through Wikidata, or a ConceptMap); otherwise each meaning is a
-CodeableConcept of its own. A confirmed coding carries `userSelected: true`. By default only confirmed
-assignments are written.
+One wording is coded in every code system that knows it: a mention carries an assignment from each package
+that lists its words, and nothing chooses between packages. The output is what FHIR has for exactly this, a
+`CodeableConcept`: its `text` is the wording in the document, and it holds one `coding` for every assignment of
+the mention, from whatever system. A confirmed coding carries `userSelected: true`. By default only confirmed
+assignments are written, so that the codings of a CodeableConcept are those a person said this wording means.
+Where a mention's confirmed codings are different meanings and not one concept in several systems, a caller
+asks for a CodeableConcept for each (`together` off). A mapping between packages (identifiers shared through
+Wikidata, a ConceptMap) can later say which codings mean the same without a person.
+
+*Built in 0.2.1: `lexterm.export.codeable_concepts(annotation)` and `lexterm export fhir ANNOTATION`.*
 
 A CodeableConcept is not a resource. What it becomes (a condition, an observation, a medication) is for the
 program that takes it over. Who confirmed it and when belongs in a `Provenance` beside that resource; the
@@ -410,7 +422,7 @@ redaction, the re-check, the estimate of residual risk.
 2. **0.2** The annotation document with origin and status; the two windows.
    *In lexterm 0.2.0: the annotation document, which is lexcor's (`lexterm.annotate`, `lexterm tag FILE
    --annotation FILE`). The windows are still to come.*
-3. **0.3** Output as FHIR, for medDAV and as UIMA CAS; importers for FHIR packages, SNOMED CT release files and
+3. **0.3** Output as FHIR (built ahead of its stage, in 0.2.1), for medDAV and as UIMA CAS; importers for FHIR packages, SNOMED CT release files and
    MeSH; instructions for the packages a user builds.
 4. **0.4** Client of a terminology server.
 5. **0.5** Server.

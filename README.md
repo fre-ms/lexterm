@@ -34,9 +34,13 @@ What is here:
 - the annotation document (`lexterm.annotate`, `lexterm tag FILE --annotation FILE`): what was found and what
   a person decided, in one JSON file beside the text; a later run keeps every decision.
 
-Without a store lexterm recognises with the package it brings, in memory, and writes nothing anywhere; that is
-how a program that reads documents uses it. Not here yet: the windows, the output as FHIR and for medDAV, the
-client and server of a terminology server.
+- the output as FHIR (`lexterm.export.codeable_concepts`, `lexterm export fhir ANNOTATION`): a mention becomes a
+  `CodeableConcept` with its wording as text and a coding from every code system that knows it.
+
+One wording is coded in every code system that lists it; nothing chooses between packages. Without a store
+lexterm recognises with the package it brings, in memory, and writes nothing anywhere; that is how a program
+that reads documents uses it. Not here yet: the windows, the output for medDAV, the client and server of a
+terminology server.
 
 Tests: `pytest`; checks: `ruff check .` and `mypy`.
 
