@@ -183,3 +183,13 @@ def test_a_package_codes_the_shorter_wording_it_knows_inside_a_longer_mention(
         nested = [(m.text, [a.code for a in m.assignments])
                   for m in lexterm.tag(text, store, nested=True)]
         assert nested == [("Morbus Parkinson", ["G20"]), ("Parkinson", ["P1", "G20.9"])]
+
+
+def test_terms_of_a_package_marked_with_a_region_are_found(tmp_path: Path) -> None:
+    """The BfArM marks its CodeSystems "de-DE"; a German text asks for "de"."""
+    icd = Package(url="http://fhir.de/CodeSystem/bfarm/icd-10-gm", version="2026",
+                  language="de-DE", concepts=[Concept("R18", "Aszites")])
+    with lexterm.open_store(tmp_path / "lexterm.sqlite") as store:
+        store.add_package(icd)
+        mention, = lexterm.tag("Kein Aszites.", store)
+        assert [(a.code, a.system) for a in mention.assignments] == [("R18", icd.url)]
