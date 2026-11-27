@@ -29,6 +29,7 @@ under its conditions (``lexterm sources`` says where), and lexterm reads it.
 from __future__ import annotations
 
 import re
+import uuid
 import zipfile
 from pathlib import Path
 
@@ -51,6 +52,16 @@ CODES = ((2, "icd-10-gm-primary"), (3, "icd-10-gm-star"), (4, "icd-10-gm-additio
          (5, "icd-10-gm-primary-2"))
 ORPHA_FIELD, ORPHA_PROPERTY, TEXT_FIELD, FIELDS = 6, "orpha", 7, 8
 _YEAR = re.compile(r"alphaid(?:se)?(\d{4})", re.IGNORECASE)
+# the namespace of the URIs lexterm gives packages it makes where the source names none
+LEXTERM = uuid.uuid5(uuid.NAMESPACE_URL, "https://github.com/fre-ms/lexterm")
+
+
+def made_url(name: str) -> str:
+    """The URI of a package lexterm makes that its source gives none: the same in every
+    store and for every year, so that a new edition replaces the one before, and never one
+    a store gives a list of its own (a program that keeps lists in the same store tells
+    its own by that)."""
+    return f"urn:uuid:{uuid.uuid5(LEXTERM, name)}"
 
 
 def _not_the_file(german: str, english: str) -> PackageError:
@@ -135,10 +146,11 @@ def read_alpha_id(file: str | Path) -> tuple[list[Package], int]:
         package("AlphaIDSE", "Alpha-ID-SE", wordings, url=ALPHA_ID),
         # the edition of a year is the index to the ICD-10-GM of that year
         package("AlphaIDSE_ICD10GM", "Alpha-ID-SE: Bezeichnungen zur ICD-10-GM",
-                supplement(coded), supplements=f"{ICD_10_GM}|{version}" if version else ICD_10_GM),
+                supplement(coded), made_url("AlphaIDSE_ICD10GM"),
+                f"{ICD_10_GM}|{version}" if version else ICD_10_GM),
     ]
     if rare:
         packages.append(package("AlphaIDSE_ORPHAcodes",
                                 "Alpha-ID-SE: Bezeichnungen zu den ORPHAcodes",
-                                supplement(rare), supplements=ORPHA))
+                                supplement(rare), made_url("AlphaIDSE_ORPHAcodes"), ORPHA))
     return packages, retired

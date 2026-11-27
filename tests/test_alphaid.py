@@ -13,7 +13,7 @@ import pytest
 from lexcor import Concept, Package, PackageError
 
 import lexterm
-from lexterm.alphaid import ALPHA_ID, ICD_10_GM, ORPHA, SOURCE, read_alpha_id
+from lexterm.alphaid import ALPHA_ID, ICD_10_GM, ORPHA, SOURCE, made_url, read_alpha_id
 from lexterm.cli import main
 from lexterm.export import codeable_concepts
 
@@ -57,7 +57,10 @@ def test_the_file_becomes_the_alpha_id_and_two_supplements(tmp_path: Path) -> No
          {"icd-10-gm-primary": "X01.1", "icd-10-gm-primary-2": "X05.2", "orpha": "77002"})]
     # the wordings are further terms of the codes they are classified under: a supplement,
     # so that they never take the place of the classification itself
-    assert (icd.url, icd.supplements, icd.version) == ("", f"{ICD_10_GM}|2027", "2027")
+    assert (icd.supplements, icd.version) == (f"{ICD_10_GM}|2027", "2027")
+    # a URI of lexterm's, the same in every store and year: no list a store calls its own
+    assert icd.url == made_url("AlphaIDSE_ICD10GM") and icd.url.startswith("urn:uuid:")
+    assert orpha.url == made_url("AlphaIDSE_ORPHAcodes") != icd.url
     assert (icd.title, orpha.title) == ("Alpha-ID-SE: Bezeichnungen zur ICD-10-GM",
                                         "Alpha-ID-SE: Bezeichnungen zu den ORPHAcodes")
     assert {c.code: [t.value for t in c.terms] for c in icd.concepts} == {
@@ -66,7 +69,7 @@ def test_the_file_becomes_the_alpha_id_and_two_supplements(tmp_path: Path) -> No
         "X05.2": ["Musterfieber mit Musterschwäche"],
         "Y03.1": ["Mustermeningitis durch Musterfieber"],
         "Z09.9": ["Mustererreger als Ursache"]}
-    assert (orpha.url, orpha.supplements) == ("", ORPHA)
+    assert orpha.supplements == ORPHA
     assert {c.code: [t.value for t in c.terms] for c in orpha.concepts} == {
         "77001": ["Musterfieber"], "77002": ["Musterfieber mit Musterschwäche"]}
 
@@ -162,3 +165,15 @@ def test_the_file_can_be_taken_in_without_being_applied_yet(tmp_path: Path) -> N
     with lexterm.open_store(store) as opened:
         assert opened.chosen() == [] and len(opened.switched_off()) == 3
         assert lexterm.tag("Musterfieber", opened, opened.chosen()) == []
+
+
+def test_a_store_does_not_take_the_supplements_for_lists_of_its_own(tmp_path: Path) -> None:
+    packages, _retired = read_alpha_id(data_file(tmp_path))
+    with lexterm.open_store(tmp_path / "one.sqlite") as one, \
+            lexterm.open_store(tmp_path / "two.sqlite") as two:
+        for store in (one, two):
+            for package in packages:
+                store.add_package(package)
+        assert [p.url for p in one.packages()] == [p.url for p in two.packages()]
+        assert all(p.url != one.local_url(p.title) and p.url != one.local_url(p.name)
+                   for p in packages)

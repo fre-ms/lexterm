@@ -58,7 +58,7 @@ More than 89,000 diagnosis wordings from the alphabetical index to the ICD-10-GM
 lexterm alpha-id alphaidse2027.zip
 ```
 
-The packages hold the Alpha-ID under `http://fhir.de/CodeSystem/bfarm/alpha-id`, with the codes the file gives a wording as properties of its concept (`icd-10-gm-primary`, `icd-10-gm-star`, `icd-10-gm-additional`, `icd-10-gm-primary-2`, `orpha`), and code the wordings in `http://fhir.de/CodeSystem/bfarm/icd-10-gm` and `http://www.orpha.net`. A wording is taken as the file gives it: one with an explanation in square brackets is found only where a text has it in that form.
+The packages hold the Alpha-ID under `http://fhir.de/CodeSystem/bfarm/alpha-id`, with the codes the file gives a wording as properties of its concept (`icd-10-gm-primary`, `icd-10-gm-star`, `icd-10-gm-additional`, `icd-10-gm-primary-2`, `orpha`), and code the wordings in `http://fhir.de/CodeSystem/bfarm/icd-10-gm` and `http://www.orpha.net`. The two supplements carry URIs of lexterm's own (`urn:uuid:…`, the same in every store and every year), so that a new edition replaces the one before and no program that keeps lists in the same store takes them for lists of its own. A wording is taken as the file gives it: one with an explanation in square brackets is found only where a text has it in that form.
 
 - [Alpha-ID-SE at the BfArM](https://www.bfarm.de/DE/Kodiersysteme/Terminologien/Alpha-ID-SE/_node.html)
 - [Downloads of the Alpha-ID-SE](https://www.bfarm.de/DE/Kodiersysteme/Services/Downloads/_node.html#anker-alpha-id-downloads)
