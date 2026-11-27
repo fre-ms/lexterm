@@ -3,8 +3,9 @@
 """The command line of lexterm: the core's commands under lexterm's name.
 
     lexterm packages list | import FILE | export PACKAGE FILE | remove PACKAGE
-    lexterm tag FILE [--package PACKAGE]... [--class CLASS]... [--nested] [--annotation FILE]
-    lexterm export fhir ANNOTATION [--all] [--apart]
+    lexterm tag FILE [--package PACKAGE]... [--without PACKAGE]... [--class CLASS]... [--nested]
+                     [--annotation FILE [--repeat]]
+    lexterm export fhir ANNOTATION [--all] [--apart] [--terminal-codes]
     lexterm snomed FOLDER [--term-language LANGUAGE]... [--store FILE]
     lexterm alpha-id FILE [--store FILE]
     lexterm sources [--json]
@@ -36,6 +37,11 @@ def _tag(text: str, store: Store, packages: Iterable[str] | None,
                        nested=nested)
 
 
+def _listing(store: Store, packages: list[str] | None) -> list[dict[str, str]]:
+    """What a run applies: the store's packages, or where it holds none lexterm's own."""
+    return lexterm.listing(store if store.packages() else None, packages)
+
+
 def _export(arguments: list[str]) -> int:
     """``lexterm export fhir ANNOTATION``: the CodeableConcepts of an annotation document as
     one JSON document on standard output."""
@@ -50,6 +56,11 @@ def _export(arguments: list[str]) -> int:
     parser.add_argument("--apart", action="store_true", help=say(
         "je Zuordnung ein eigenes CodeableConcept statt eines je Fundstelle",
         "a CodeableConcept for every assignment instead of one for every mention"))
+    parser.add_argument("--terminal-codes", action="store_true", help=say(
+        "nur endständige Kodes einer Klassifikation (bei der ICD-10-GM die Kodes, mit denen"
+        " verschlüsselt wird); Kodes eines Systems ohne Hierarchie bleiben",
+        "terminal codes of a classification only (for the ICD-10-GM the codes one codes"
+        " with); codes of a system without a hierarchy stay"))
     args = parser.parse_args(arguments)
     try:
         document = load_annotation(args.annotation)
@@ -59,7 +70,8 @@ def _export(arguments: list[str]) -> int:
         print(json.dumps({"error": error.kind, "message": error.messages}, ensure_ascii=False))
         return 1
     statuses = STATUSES if args.all else ("confirmed",)
-    print(json.dumps({"concepts": codeable_concepts(document, statuses, not args.apart)},
+    print(json.dumps({"concepts": codeable_concepts(document, statuses, not args.apart,
+                                                    args.terminal_codes)},
                      ensure_ascii=False, indent=1))
     return 0
 
@@ -178,7 +190,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
             return command(given[given.index(word) + 1:])
     arguments = given
     return lexcor.cli.main(arguments, program="lexterm", library="lexterm", tagger=_tag,
-                           version=lexterm.__version__)
+                           version=lexterm.__version__, lister=_listing)
 
 
 if __name__ == "__main__":

@@ -110,7 +110,8 @@ def test_the_annotation_document_keeps_a_persons_decisions(tmp_path: Path) -> No
     document = lexterm.annotate(text)
     assert document.made_with == f"lexterm {lexterm.__version__}"
     assert document.packages == [{"url": bundled.WIKIDATA, "version": bundled.WIKIDATA_VERSION,
-                                  "sha256": bundled.wikidata().sha256()}]
+                                  "sha256": bundled.wikidata().sha256(),
+                                  "title": bundled.wikidata().title}]
     assert document.settings == {"packages": [], "classes": [], "language": "de",
                                  "nested": False}
     assert [(n.id, n.exact) for n in document.mentions] == [("m1", "arterielle Hypertonie"),

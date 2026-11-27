@@ -9,6 +9,10 @@ the text, coded in every system that knows it.
 
 A CodeableConcept is not a resource.  What it becomes (a condition, an observation, a
 medication) is for the program that takes it over, and so is the record of who confirmed it.
+
+A code that is not terminal in its classification (a group or category of the ICD-10-GM such
+as E10-E14) is a true statement about the text but no code to code with; ``terminal_codes``
+leaves such codings out.  The annotation document keeps them, marked.
 """
 
 from __future__ import annotations
@@ -34,17 +38,21 @@ def coding(assigned: Assigned) -> dict[str, Any]:
     return data
 
 
-def codeable_concept(noted: Noted, statuses: Iterable[str] = (CONFIRMED,)) -> dict[str, Any] | None:
+def codeable_concept(noted: Noted, statuses: Iterable[str] = (CONFIRMED,),
+                     terminal_codes: bool = False) -> dict[str, Any] | None:
     """One mention as a FHIR ``CodeableConcept``: a coding for each of its assignments of
-    these statuses, from every code system among them, and the wording as its text.  None
-    when the mention has no such assignment."""
+    these statuses, from every code system among them, and the wording as its text.  With
+    ``terminal_codes`` a code that is not terminal in its code system is left out (a code of
+    a system without a hierarchy stays).  None when the mention has no such assignment."""
     wanted = set(statuses)
-    codings = [coding(a) for a in noted.assignments if a.status in wanted]
+    codings = [coding(a) for a in noted.assignments if a.status in wanted
+               and not (terminal_codes and a.terminal is False)]
     return {"coding": codings, "text": noted.exact} if codings else None
 
 
 def codeable_concepts(annotation: Annotation, statuses: Iterable[str] = (CONFIRMED,),
-                      together: bool = True) -> list[dict[str, Any]]:
+                      together: bool = True,
+                      terminal_codes: bool = False) -> list[dict[str, Any]]:
     """The mentions of an annotation document as FHIR CodeableConcepts, in reading order,
     each with the mention it belongs to and its place::
 
@@ -53,11 +61,12 @@ def codeable_concepts(annotation: Annotation, statuses: Iterable[str] = (CONFIRM
     By default only what a person confirmed is given.  With ``together`` the codings of a
     mention stand in one CodeableConcept: whoever confirmed them said that they are what
     this wording means.  Where a mention's codings may be different meanings, ``together``
-    off gives a CodeableConcept for each."""
+    off gives a CodeableConcept for each.  ``terminal_codes`` leaves out codes that are not
+    terminal in their code system."""
     wanted = tuple(statuses)
     out = []
     for noted in annotation.mentions:
-        concept = codeable_concept(noted, wanted)
+        concept = codeable_concept(noted, wanted, terminal_codes)
         if concept is None:
             continue
         parts = [concept] if together else [{"coding": [c], "text": noted.exact}

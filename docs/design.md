@@ -294,6 +294,12 @@ Wikidata, a ConceptMap) can later say which codings mean the same without a pers
 
 *Built in 0.2.1: `lexterm.export.codeable_concepts(annotation)` and `lexterm export fhir ANNOTATION`.*
 
+A code that is not terminal in its classification (a group or category of the ICD-10-GM such as E10-E14) is a
+true statement about the text but no code to code with. The annotation document marks every assignment of a
+code system with a hierarchy as terminal or not (lexcor's design, section 5), and the output leaves the ones
+that are not terminal out on request (`terminal_codes`, `lexterm export fhir ANNOTATION --terminal-codes`).
+Nothing is left out before: the review shows both. *Built in 0.2.5.*
+
 A CodeableConcept is not a resource. What it becomes (a condition, an observation, a medication) is for the
 program that takes it over. Who confirmed it and when belongs in a `Provenance` beside that resource; the
 annotation document holds what is needed for it.

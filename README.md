@@ -32,10 +32,14 @@ What is here:
   FILE`.
 
 - the annotation document (`lexterm.annotate`, `lexterm tag FILE --annotation FILE`): what was found and what
-  a person decided, in one JSON file beside the text; a later run keeps every decision.
+  a person decided, in one JSON file beside the text; a later run keeps every decision. Every run chooses its
+  packages (`--package`, `--without`), the document records exactly what it applied (each package with its
+  version, the fingerprints of its content and of the user's changes to it; `lexterm.listing`), and `lexterm
+  tag FILE --annotation DOC --repeat` runs again as recorded or says which package is no longer the same.
 
 - the output as FHIR (`lexterm.export.codeable_concepts`, `lexterm export fhir ANNOTATION`): a mention becomes a
-  `CodeableConcept` with its wording as text and a coding from every code system that knows it.
+  `CodeableConcept` with its wording as text and a coding from every code system that knows it; with
+  `--terminal-codes` without the codes of a classification that are not terminal (E10-E14, E11).
 
 - readers for what a user gets themselves: FHIR CodeSystems and FHIR packages (`lexterm packages import`),
   releases of SNOMED CT in RF2 (`lexterm snomed FOLDER`), and the Alpha-ID-SE of the BfArM (`lexterm alpha-id

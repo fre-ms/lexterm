@@ -34,15 +34,15 @@ from pathlib import Path
 
 import lexcor
 from lexcor import Annotation, Cover, Mention, PackageInfo, Recogniser, Store, entries_of
-from lexcor.annotation import packages_of
+from lexcor.annotation import listed, packages_of
 
 from lexterm import bundled, export
 from lexterm.rules import EPONYM_HEADS, VARIANTS
 
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 __all__ = ["EPONYM_HEADS", "VARIANTS", "annotate", "bundled", "cover", "covers", "export",
-           "install", "open_store", "recogniser", "tag"]
+           "install", "listing", "open_store", "recogniser", "tag"]
 
 Choice = tuple[str, ...] | None
 
@@ -106,8 +106,20 @@ def tag(text: str, store: Store | None = None, packages: Iterable[str] | None = 
 
 
 @cache
-def _bundled_listing() -> tuple[tuple[str, str, str], ...]:
-    return tuple((p.url, p.version, p.sha256()) for p in bundled.packages())
+def _bundled_listing() -> tuple[dict[str, str], ...]:
+    return tuple(listed(bundled.packages()))
+
+
+def listing(store: Store | None = None,
+            packages: Iterable[str] | None = None) -> list[dict[str, str]]:
+    """The packages a run applies, as an annotation document names them: each with its
+    version and the fingerprints of its content and of the user's changes to it.  Without
+    a store they are those that come with lexterm.  A program that keeps a record of its own
+    (a step of a pipeline, a configuration document) takes it from here."""
+    wanted = _chosen(packages)
+    if store is None:
+        return [dict(p) for p in _bundled_listing() if wanted is None or p["url"] in wanted]
+    return packages_of(store, wanted)
 
 
 def annotate(text: str, store: Store | None = None, packages: Iterable[str] | None = None,
@@ -116,19 +128,14 @@ def annotate(text: str, store: Store | None = None, packages: Iterable[str] | No
     """Tag a text and give its annotation document: a new one, or the one handed in brought
     up to date.  What a person confirmed, rejected or marked in it stays; only what lexterm
     proposed before and nobody has decided is replaced.  The document names the packages
-    with their versions and fingerprints, so that it says what it was made from."""
+    the run applied (:func:`listing`), so that it says what it was made from."""
     found = tag(text, store, packages, classes, language, nested)
     wanted = _chosen(packages)
-    if store is None:
-        listed = [{"url": url, "version": version, "sha256": sha256}
-                  for url, version, sha256 in _bundled_listing()
-                  if wanted is None or url in wanted]
-    else:
-        listed = packages_of(store, wanted)
     name = f"lexterm {__version__}"
     settings = {"packages": list(wanted or ()), "classes": list(_chosen(classes) or ()),
                 "language": language, "nested": nested}
-    return (annotation or Annotation()).update(text, found, name, name, listed, settings)
+    return (annotation or Annotation()).update(text, found, name, name,
+                                               listing(store, wanted), settings)
 
 
 def cover(store: Store | None = None, packages: Iterable[str] | None = None,
