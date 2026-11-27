@@ -4,13 +4,15 @@
 
     import lexterm
 
-    for mention in lexterm.tag("Bekannte arterielle Hypertonie, Ramipril seit 2019."):
-        print(mention.text, [(a.system, a.code, a.cls) for a in mention.assignments])
+    with lexterm.open_store() as store:
+        for mention in lexterm.tag("Bekannte arterielle Hypertonie, Ramipril seit 2019.", store):
+            print(mention.text, [(a.system, a.code, a.cls) for a in mention.assignments])
 
-Without a store lexterm recognises with the free packages it brings, in memory, and writes
-nothing anywhere.  With a store (:func:`open_store`) it recognises with the packages of that
-store: the ones a user imported, edited or built from a source they hold a licence for;
-:func:`install` puts the free packages into a store as well.
+lexterm brings no terminology of its own.  It recognises with the packages of a store
+(:func:`open_store`): terminologies a person downloaded under their conditions and took in
+(the ICD-10-GM, the Alpha-ID-SE, SNOMED CT, :mod:`lexterm.sources` says where they come
+from), and lists of their own.  A program hands lexterm the store it means, so that what it
+recognises with is never a store it did not name.
 
 One wording is coded in every code system that knows it: a mention carries an assignment
 from each package that lists its words.  What was found and what a person decided about it
@@ -23,28 +25,26 @@ mentions and gives codes; :func:`covers` says whether a span is medical vocabula
 generously, for a program that guesses at names and must leave such words alone.
 
 lexterm is thin over lexcor, the core it shares with lexident: the packages, the store and
-the matcher are the core's; the medical rules (``rules``) and the packages are lexterm's.
+the matcher are the core's; the medical rules (``rules``) and the readers of terminologies
+are lexterm's.
 """
 
 from __future__ import annotations
 
 from collections.abc import Iterable
-from functools import cache
 from pathlib import Path
 
 import lexcor
-from lexcor import Annotation, Cover, Mention, PackageInfo, Recogniser, Store, entries_of
-from lexcor.annotation import listed, packages_of
+from lexcor import Annotation, Cover, Mention, Recogniser, Store
+from lexcor.annotation import packages_of
 
-from lexterm import bundled, export
+from lexterm import export
 from lexterm.rules import EPONYM_HEADS, VARIANTS
 
-__version__ = "0.2.6"
+__version__ = "0.2.8"
 
-__all__ = ["EPONYM_HEADS", "VARIANTS", "annotate", "bundled", "cover", "covers", "export",
-           "install", "listing", "open_store", "recogniser", "tag"]
-
-Choice = tuple[str, ...] | None
+__all__ = ["EPONYM_HEADS", "VARIANTS", "annotate", "cover", "covers", "export", "listing",
+           "open_store", "recogniser", "tag"]
 
 
 def open_store(path: str | Path | None = None, readonly: bool = False) -> Store:
@@ -53,46 +53,20 @@ def open_store(path: str | Path | None = None, readonly: bool = False) -> Store:
     return lexcor.open_store(path, "lexterm", readonly)
 
 
-def install(store: Store) -> list[PackageInfo]:
-    """Put the packages that come with lexterm into a store, where a user can edit them; one
-    that is there already in the same version is left as it is."""
-    held = {info.url: info for info in store.packages()}
-    taken = []
-    for package in bundled.packages():
-        known = held.get(package.url)
-        if known is None or known.sha256 != package.sha256():
-            taken.append(store.add_package(package))
-    return taken
-
-
-def _chosen(choice: Iterable[str] | None) -> Choice:
+def _chosen(choice: Iterable[str] | None) -> tuple[str, ...] | None:
     return None if choice is None else tuple(sorted(choice))
 
 
-@cache
-def _bundled_recogniser(packages: Choice, classes: Choice, language: str) -> Recogniser:
-    chosen = [p for p in bundled.packages() if packages is None or p.url in packages]
-    return Recogniser(entries_of(chosen, classes, (language,)), VARIANTS, language)
-
-
-@cache
-def _bundled_cover(packages: Choice, classes: Choice, language: str) -> Cover:
-    chosen = [p for p in bundled.packages() if packages is None or p.url in packages]
-    return Cover((e.term for e in entries_of(chosen, classes, (language,))), EPONYM_HEADS)
-
-
-def recogniser(store: Store | None = None, packages: Iterable[str] | None = None,
+def recogniser(store: Store, packages: Iterable[str] | None = None,
                classes: Iterable[str] | None = None, language: str = "de") -> Recogniser:
-    """The recogniser for a choice of packages (their URLs) and classes: over the packages of
-    a store, or without one over those that come with lexterm.  It is built once.  Only terms
-    in the language of the text are looked for: English names in a German letter tag "gut"
+    """The recogniser over a choice of the packages of a store (their URLs; all when None)
+    and of classes, built once and again only when the store has changed.  Only terms in
+    the language of the text are looked for: English names in a German letter tag "gut"
     and "fast"."""
-    if store is None:
-        return _bundled_recogniser(_chosen(packages), _chosen(classes), language)
     return lexcor.recogniser(store, packages, classes, VARIANTS, language, (language,))
 
 
-def tag(text: str, store: Store | None = None, packages: Iterable[str] | None = None,
+def tag(text: str, store: Store, packages: Iterable[str] | None = None,
         classes: Iterable[str] | None = None, language: str = "de",
         nested: bool = False) -> list[Mention]:
     """Which concepts does this text mention?  Every mention has its place in the text (in
@@ -101,28 +75,19 @@ def tag(text: str, store: Store | None = None, packages: Iterable[str] | None = 
     itself: a mention carries an assignment from each package that lists its words, and a
     package that knows only a shorter wording inside a longer mention codes that, so that
     mentions may overlap.  ``nested`` asks for a package's own shorter terms inside its
-    longer ones as well."""
+    longer ones as well.  A store without packages finds nothing."""
     return recogniser(store, packages, classes, language).tag(text, nested)
 
 
-@cache
-def _bundled_listing() -> tuple[dict[str, str], ...]:
-    return tuple(listed(bundled.packages()))
-
-
-def listing(store: Store | None = None,
-            packages: Iterable[str] | None = None) -> list[dict[str, str]]:
+def listing(store: Store, packages: Iterable[str] | None = None) -> list[dict[str, str]]:
     """The packages a run applies, as an annotation document names them: each with its
-    version and the fingerprints of its content and of the user's changes to it.  Without
-    a store they are those that come with lexterm.  A program that keeps a record of its own
-    (a step of a pipeline, a configuration document) takes it from here."""
-    wanted = _chosen(packages)
-    if store is None:
-        return [dict(p) for p in _bundled_listing() if wanted is None or p["url"] in wanted]
-    return packages_of(store, wanted)
+    version and the fingerprints of its content and of the user's changes to it.  A program
+    that keeps a record of its own (a step of a pipeline, a configuration document) takes it
+    from here."""
+    return packages_of(store, _chosen(packages))
 
 
-def annotate(text: str, store: Store | None = None, packages: Iterable[str] | None = None,
+def annotate(text: str, store: Store, packages: Iterable[str] | None = None,
              classes: Iterable[str] | None = None, language: str = "de",
              annotation: Annotation | None = None, nested: bool = False) -> Annotation:
     """Tag a text and give its annotation document: a new one, or the one handed in brought
@@ -138,18 +103,15 @@ def annotate(text: str, store: Store | None = None, packages: Iterable[str] | No
                                                listing(store, wanted), settings)
 
 
-def cover(store: Store | None = None, packages: Iterable[str] | None = None,
+def cover(store: Store, packages: Iterable[str] | None = None,
           classes: Iterable[str] | None = None, language: str = "de") -> Cover:
-    """The medical vocabulary as one set of words and phrases, for the generous question;
-    over the packages of a store, or without one over those that come with lexterm."""
-    if store is None:
-        return _bundled_cover(_chosen(packages), _chosen(classes), language)
+    """The medical vocabulary of a store as one set of words and phrases, for the generous
+    question."""
     return lexcor.cover(store, packages, classes, EPONYM_HEADS, (language,))
 
 
-def covers(text: str, start: int, end: int, store: Store | None = None,
-           whole: bool = False) -> bool:
-    """Is ``text[start:end]`` medical vocabulary?  A part of a hyphenated word counts
-    ("Parkinson-Syndrom"), as does an eponym on its own ("Babinski").  With ``whole`` every
-    word of the span must be vocabulary."""
+def covers(text: str, start: int, end: int, store: Store, whole: bool = False) -> bool:
+    """Is ``text[start:end]`` medical vocabulary of a store?  A part of a hyphenated word
+    counts ("Parkinson-Syndrom"), as does an eponym on its own ("Babinski").  With ``whole``
+    every word of the span must be vocabulary."""
     return cover(store).covers(text, start, end, whole=whole)

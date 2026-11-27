@@ -18,7 +18,8 @@ names for it (as the German profiles for a diagnosis put the three side by side)
   URL, so that it never takes the place of the classification with its titles and hierarchy;
 - a **supplement to the ORPHAcodes** likewise.
 
-A wording is taken as the file gives it.  Entries the file marks as no longer valid are left
+The packages carry German titles, as the file and the classification do.  A wording is
+taken as the file gives it.  Entries the file marks as no longer valid are left
 out: they are kept there for decoding old numbers, not for coding.
 
 Nothing of the Alpha-ID-SE comes with lexterm: a person downloads the file from the BfArM
@@ -133,10 +134,11 @@ def read_alpha_id(file: str | Path) -> tuple[list[Package], int]:
     packages = [
         package("AlphaIDSE", "Alpha-ID-SE", wordings, url=ALPHA_ID),
         # the edition of a year is the index to the ICD-10-GM of that year
-        package("AlphaIDSE_ICD10GM", "Alpha-ID-SE: wordings for the ICD-10-GM",
+        package("AlphaIDSE_ICD10GM", "Alpha-ID-SE: Bezeichnungen zur ICD-10-GM",
                 supplement(coded), supplements=f"{ICD_10_GM}|{version}" if version else ICD_10_GM),
     ]
     if rare:
-        packages.append(package("AlphaIDSE_ORPHAcodes", "Alpha-ID-SE: wordings for the ORPHAcodes",
+        packages.append(package("AlphaIDSE_ORPHAcodes",
+                                "Alpha-ID-SE: Bezeichnungen zu den ORPHAcodes",
                                 supplement(rare), supplements=ORPHA))
     return packages, retired

@@ -25,11 +25,13 @@ What is here:
   counts, an eponym on its own counts), for a program that guesses at names;
 - the medical rules: spellings that stand side by side ("Colitis" and "Kolitis"), and the head nouns after
   which a name is an eponym ("Babinski-Zeichen");
-- one free package that comes with it: the German names of what Wikidata lists with a medical identifier
-  (ICD-10, ATC, INN, LOINC, MeSH), 17,600 items in 39,600 names, CC0 1.0, with Wikidata's identifiers as codes;
+- no terminology of its own: lexterm recognises with what a person took into a store, the terminologies of
+  the BfArM and SNOMED CT among them (`lexterm sources` says where to get them). The German names from
+  Wikidata that came with it up to version 0.2.7 are gone: uncurated, they protected and coded words such
+  as "sowie";
 - a store of its own for the packages a user imports, edits or builds from a source they hold a licence for
-  (`lexterm.open_store()`, `lexterm.install(store)`), and the command line `lexterm packages …`, `lexterm tag
-  FILE`.
+  (`lexterm.open_store()`), and the command line `lexterm packages …`, `lexterm tag FILE`; what is taken in
+  is ticked, so that it is applied, unless it is taken in with `--off`.
 
 - the annotation document (`lexterm.annotate`, `lexterm tag FILE --annotation FILE`): what was found and what
   a person decided, in one JSON file beside the text; a later run keeps every decision. Every run chooses its
@@ -50,9 +52,9 @@ What is here:
   a box to tick for the runs that follow, taking in every form above, and beside them where terminologies come
   from, with the links.
 
-One wording is coded in every code system that lists it; nothing chooses between packages. Without a store
-lexterm recognises with the package it brings, in memory, and writes nothing anywhere; that is how a program
-that reads documents uses it. Not here yet: the windows, the output for medDAV, the client and server of a
+One wording is coded in every code system that lists it; nothing chooses between packages. A program hands
+lexterm the store it means, opened for reading where it may only read, and lexterm writes nothing anywhere
+else; that is how a program that reads documents uses it. Not here yet: the windows, the output for medDAV, the client and server of a
 terminology server.
 
 Tests: `pytest`; checks: `ruff check .` and `mypy`.

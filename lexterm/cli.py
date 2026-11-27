@@ -7,13 +7,14 @@
     lexterm tag FILE [--package PACKAGE]... [--without PACKAGE]... [--class CLASS]... [--nested]
                      [--annotation FILE [--repeat]]
     lexterm export fhir ANNOTATION [--all] [--apart] [--terminal-codes]
-    lexterm snomed FOLDER [--term-language LANGUAGE]... [--store FILE]
-    lexterm alpha-id FILE [--store FILE]
+    lexterm snomed FOLDER [--term-language LANGUAGE]... [--store FILE] [--off]
+    lexterm alpha-id FILE [--store FILE] [--off]
     lexterm sources [--json]
 
-The store is lexterm's in the user's data folder unless ``--store`` names another.  A store
-that holds no package yet is answered from the packages that come with lexterm, so that
-``lexterm tag`` works from the first call.
+The store is lexterm's in the user's data folder unless ``--store`` names another.  lexterm
+brings no terminology: a store that holds none yet says so when a text is to be tagged, and
+``lexterm sources`` says where terminologies come from.  What is taken in is ticked, so that
+it is applied, unless it is taken in with ``--off``.
 """
 
 from __future__ import annotations
@@ -34,19 +35,20 @@ from lexterm.export import codeable_concepts
 
 def _tag(text: str, store: Store, packages: Iterable[str] | None,
          classes: Iterable[str] | None, nested: bool) -> list[Mention]:
-    return lexterm.tag(text, store if store.packages() else None, packages, classes,
-                       nested=nested)
+    if not store.packages():
+        raise LexError(
+            "no-terminology",
+            "Die Ablage enthält noch keine Terminologie. lexterm bringt keine mit; woher man"
+            " sie bekommt, sagt „lexterm sources“.",
+            "The store holds no terminology yet. lexterm brings none; \"lexterm sources\""
+            " says where to get them.")
+    return lexterm.tag(text, store, packages, classes, nested=nested)
 
 
 def _window(store: Store) -> int:
     from lexterm.window import open_window
 
     return open_window(store)
-
-
-def _listing(store: Store, packages: list[str] | None) -> list[dict[str, str]]:
-    """What a run applies: the store's packages, or where it holds none lexterm's own."""
-    return lexterm.listing(store if store.packages() else None, packages)
 
 
 def _export(arguments: list[str]) -> int:
@@ -95,6 +97,9 @@ def _snomed(arguments: list[str]) -> int:
         " store. SNOMED CT needs a licence; the package stays with you. \"lexterm sources\""
         " says where the release comes from."))
     parser.add_argument("folder", type=Path)
+    parser.add_argument("--off", action="store_true", help=say(
+        "aufnehmen, aber noch nicht anwenden (nicht angekreuzt)",
+        "take in, but do not apply yet (unticked)"))
     parser.add_argument("--term-language", action="append", metavar="LANGUAGE", help=say(
         "Sprache der Begriffe (mehrfach möglich; Standard: de)",
         "language of the terms (may be given several times; default: de)"))
@@ -106,7 +111,7 @@ def _snomed(arguments: list[str]) -> int:
     try:
         package = read_rf2(args.folder, tuple(args.term_language or ["de"]))
         with lexterm.open_store(args.store) as store:
-            info = store.add_package(package)
+            info = store.add_package(package, False if args.off else None)
     except (LexError, OSError, UnicodeDecodeError) as error:
         if not isinstance(error, LexError):
             error = LexError("unreadable", str(error), str(error))
@@ -135,6 +140,9 @@ def _alpha_id(arguments: list[str]) -> int:
         " supplement to the ICD-10-GM and to the ORPHAcodes. \"lexterm sources\" says where"
         " the file comes from."))
     parser.add_argument("file", type=Path)
+    parser.add_argument("--off", action="store_true", help=say(
+        "aufnehmen, aber noch nicht anwenden (nicht angekreuzt)",
+        "take in, but do not apply yet (unticked)"))
     parser.add_argument("--store", type=Path, help=say(
         "Datei der Ablage (sonst lexterms Ablage im Datenordner)",
         "file of the store (else lexterm's store in the data folder)"))
@@ -143,7 +151,8 @@ def _alpha_id(arguments: list[str]) -> int:
     try:
         packages, retired = read_alpha_id(args.file)
         with lexterm.open_store(args.store) as store:
-            infos = [store.add_package(package) for package in packages]
+            infos = [store.add_package(package, False if args.off else None)
+                     for package in packages]
             fits = [lexcor.cli.fit_notes(store, info) for info in infos]
     except (LexError, OSError) as error:
         if not isinstance(error, LexError):
@@ -197,7 +206,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
             return command(given[given.index(word) + 1:])
     arguments = given
     return lexcor.cli.main(arguments, program="lexterm", library="lexterm", tagger=_tag,
-                           version=lexterm.__version__, lister=_listing, window=_window)
+                           version=lexterm.__version__, window=_window)
 
 
 if __name__ == "__main__":

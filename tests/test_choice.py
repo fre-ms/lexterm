@@ -9,10 +9,10 @@ import json
 from pathlib import Path
 
 import pytest
-from lexcor import Concept, Package, Term, load_annotation
+from lexcor import Concept, Package, Term, load_annotation, write_codesystem
+from sample_terms import MEDICINE, medicine
 
 import lexterm
-from lexterm import bundled
 from lexterm.cli import main
 from lexterm.export import codeable_concepts
 
@@ -27,15 +27,6 @@ def classification() -> Package:
                        Concept("X11", "Musterkrankheit, Typ 2", "", "X10-X14"),
                        Concept("X11.9", "Musterkrankheit, Typ 2, ohne Komplikation", "", "X11",
                                [Term("Musterkrankheit Typ 2", "de")])])
-
-
-def test_without_a_store_the_document_names_the_package_lexterm_brings() -> None:
-    document = lexterm.annotate("Ramipril seit 2019.")
-    assert document.packages == [{
-        "url": bundled.WIKIDATA, "version": bundled.WIKIDATA_VERSION,
-        "sha256": bundled.wikidata().sha256(), "title": bundled.wikidata().title}]
-    assert lexterm.listing() == document.packages
-    assert lexterm.listing(packages=["http://example.org/none"]) == []
 
 
 def test_terminal_codes_are_marked_and_can_be_left_out(tmp_path: Path) -> None:
@@ -60,16 +51,19 @@ def test_lexterm_records_and_repeats_its_runs(tmp_path: Path, monkeypatch: pytes
     monkeypatch.setenv("LEXCOR_DATA", str(tmp_path / "data"))
     letter, document = tmp_path / "letter.txt", tmp_path / "letter.json"
     letter.write_text("Musterkrankheit Typ 2, Ramipril.", encoding="utf-8")
-    assert main(["tag", str(letter), "--annotation", str(document)]) == 0  # an empty store
-    assert [p["url"] for p in load_annotation(document).packages] == [bundled.WIKIDATA]
+    write_codesystem(medicine(), tmp_path / "medicine.json")
+    assert main(["packages", "import", str(tmp_path / "medicine.json")]) == 0
+    assert main(["tag", str(letter), "--annotation", str(document)]) == 0
+    assert [p["url"] for p in load_annotation(document).packages] == [MEDICINE]
     assert main(["tag", str(letter), "--annotation", str(document), "--repeat"]) == 0
     with lexterm.open_store() as store:
         store.add_package(classification())
+        store.remove_package(MEDICINE)
     capsys.readouterr()
     assert main(["--language", "en", "tag", str(letter), "--annotation", str(document),
                  "--repeat"]) == 1  # the store now answers with other packages
     said = capsys.readouterr().err
-    assert f"{bundled.WIKIDATA} is no longer in the store" in said and f"{ICD} is new" in said
+    assert f"{MEDICINE} is no longer in the store" in said and f"{ICD} is new" in said
     assert main(["tag", str(letter), "--annotation", str(document)]) == 0
     assert [p["url"] for p in load_annotation(document).packages] == [ICD]
     capsys.readouterr()

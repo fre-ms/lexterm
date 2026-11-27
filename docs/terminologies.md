@@ -3,8 +3,7 @@
 
 # Getting terminologies
 
-lexterm comes with one free package (the German names of what Wikidata lists with a medical identifier). Every
-other terminology a user gets themselves: lexterm never downloads anything, because terminologies are given out
+lexterm brings no terminology: a user gets every terminology themselves, and lexterm never downloads anything, because terminologies are given out
 under conditions a person has to accept, some under a licence. This page says where each comes from and how
 lexterm takes it in. The same text, in German and English, is in the program: `lexterm sources`.
 

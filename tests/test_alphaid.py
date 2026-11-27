@@ -58,6 +58,8 @@ def test_the_file_becomes_the_alpha_id_and_two_supplements(tmp_path: Path) -> No
     # the wordings are further terms of the codes they are classified under: a supplement,
     # so that they never take the place of the classification itself
     assert (icd.url, icd.supplements, icd.version) == ("", f"{ICD_10_GM}|2027", "2027")
+    assert (icd.title, orpha.title) == ("Alpha-ID-SE: Bezeichnungen zur ICD-10-GM",
+                                        "Alpha-ID-SE: Bezeichnungen zu den ORPHAcodes")
     assert {c.code: [t.value for t in c.terms] for c in icd.concepts} == {
         "X01.1": ["Musterfieber", "Musterfieber mit Musterschwäche"],
         "X02.0": ["Mustermeningitis durch Musterfieber"],
@@ -152,3 +154,11 @@ def test_what_is_no_file_of_the_alpha_id_is_refused(tmp_path: Path,
                  str(tmp_path / "store.sqlite"), "--json"]) == 1
     assert json.loads(capsys.readouterr().out)["error"] == "unreadable"
     assert not (tmp_path / "store.sqlite").exists()  # nothing is opened for a file that fails
+
+
+def test_the_file_can_be_taken_in_without_being_applied_yet(tmp_path: Path) -> None:
+    store = str(tmp_path / "store.sqlite")
+    assert main(["alpha-id", str(data_file(tmp_path)), "--store", store, "--off"]) == 0
+    with lexterm.open_store(store) as opened:
+        assert opened.chosen() == [] and len(opened.switched_off()) == 3
+        assert lexterm.tag("Musterfieber", opened, opened.chosen()) == []

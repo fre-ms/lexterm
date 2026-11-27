@@ -106,7 +106,7 @@ its URI is one of the store that takes it in, which belongs to whoever keeps tha
 
 | Kind | Examples | How it gets to the user |
 |---|---|---|
-| **bundled**: a licence that allows passing on | Wikidata (CC0), Orphanet (CC BY 4.0), lexterm's own lists (body parts, findings terms, laboratory tests), German MeSH if its terms of use allow | comes with lexterm |
+| **bundled**: a licence that allows passing on | none since 0.2.8: the German names from Wikidata (CC0) that came with lexterm were uncurated and are gone; a package comes with lexterm only once it is curated | comes with lexterm |
 | **built by the user from free data**, where the terms of download forbid passing on or ask for a confirmation | ICD-10-GM, OPS, ATC, Alpha-ID-SE (BfArM) | instructions and a command that fetches from the source after the user has agreed to its terms |
 | **licensed** | SNOMED CT (affiliate licence, free of charge in Germany), LOINC, UMLS, a medical dictionary, a rating system's manual | imported locally from the user's own copy, or reached through a terminology server the user runs (section 9); never shipped, never in the repository or its tests |
 
@@ -397,9 +397,9 @@ options are English; messages are German or English (`--language`).
 CAS export are extras.
 
 **Inside another program.** lexterm is a library first: PseudonyMed, medorello and semdoc (the step of the
-document tools that understands what was read from a page) import it. Without a store it recognises with the
-free packages it brings, in memory, and writes nothing; a caller that has a store hands it in, for reading
-only where the store comes inside a program. What the core keeps for such a caller is in lexcor's design
+document tools that understands what was read from a page) import it. It brings no terminology: a caller
+hands in the store it means, for reading only where the store comes inside a program, and lexterm writes
+nothing else. What the core keeps for such a caller is in lexcor's design
 (section 8).
 
 ## 12 The sibling: lexident
@@ -427,7 +427,8 @@ redaction, the re-check, the estimate of residual risk.
    CSV, the store, `tag` with every assignment, `covers`; PseudonyMed switches over.
    *Begun: lexterm is a library (`lexterm.tag`, `lexterm.covers`, a store of its own, the command line) with
    the table of spellings, the head nouns of eponyms and one free package, the German names of what Wikidata
-   lists with a medical identifier. PseudonyMed's matcher runs on lexcor; its vocabulary has not moved yet.*
+   lists with a medical identifier (removed in 0.2.8, uncurated). PseudonyMed's matcher runs on lexcor; its
+   vocabulary has not moved yet.*
 2. **0.2** The annotation document with origin and status; the two windows.
    *In lexterm 0.2.0: the annotation document, which is lexcor's (`lexterm.annotate`, `lexterm tag FILE
    --annotation FILE`). The windows are still to come.*
