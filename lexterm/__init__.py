@@ -41,7 +41,7 @@ from lexcor.annotation import packages_of
 from lexterm import export
 from lexterm.rules import EPONYM_HEADS, VARIANTS
 
-__version__ = "0.2.9"
+__version__ = "0.2.10"
 
 __all__ = ["EPONYM_HEADS", "VARIANTS", "annotate", "cover", "covers", "export", "listing",
            "open_store", "recogniser", "tag"]

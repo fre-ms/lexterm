@@ -87,7 +87,8 @@ def test_the_command_line_says_where_terminologies_come_from(
     assert main(["--language", "de", "sources"]) == 0
     german = capsys.readouterr().out
     assert "SNOMED CT, deutsche National Edition" in german and "Affiliate-Lizenz" in german
-    assert "https://mlds.ihtsdotools.org/" in german and "lexterm snomed ORDNER" in german
+    assert "https://mlds.ihtsdotools.org/" in german
+    assert "lexterm snomed SnomedCT_Germany-EditionRelease" in german
     assert main(["--language", "en", "sources", "--json"]) == 0
     listed = json.loads(capsys.readouterr().out)["sources"]
     assert [s["key"] for s in listed] == ["bfarm", "alpha-id", "snomed"]

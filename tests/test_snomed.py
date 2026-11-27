@@ -6,6 +6,7 @@ numbers and terms are no content of SNOMED CT."""
 from __future__ import annotations
 
 import json
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -43,13 +44,26 @@ def release(folder: Path) -> Path:
         ("12", "20260101", "1", "88", "9001", "de", SYNONYM, "Musterkrankheit", "c"),
         ("13", "20260101", "0", "88", "9001", "de", SYNONYM, "Altes Musterleiden", "c"),
         ("14", "20260101", "1", "88", "9002", "de", SYNONYM, "Musterschnitt", "c"),
-        ("15", "20260101", "1", "88", "9003", "de", SYNONYM, "Stillgelegtes Muster", "c")])
-    write("Refset/Language/der2_cRefset_LanguageSnapshot-de_XX1000999_20261115.txt",
-          "id effectiveTime active moduleId refsetId referencedComponentId acceptabilityId",
+        ("15", "20260101", "1", "88", "9003", "de", SYNONYM, "Stillgelegtes Muster", "c"),
+        ("16", "20260101", "1", "88", "9002", "de", SYNONYM, "Ungeprüfter Musterschnitt", "c")])
+    members = "id effectiveTime active moduleId refsetId referencedComponentId acceptabilityId"
+    write("Refset/Language/der2_cRefset_LanguageSnapshot-de_XX1000999_20261115.txt", members,
           [("a", "20260101", "1", "88", "r", "12", PREFERRED),
            ("b", "20260101", "1", "88", "r", "11", ACCEPTABLE),
-           ("c", "20260101", "1", "88", "r", "14", PREFERRED)])
+           ("c", "20260101", "1", "88", "r", "14", PREFERRED),
+           ("d", "20260101", "0", "88", "r", "16", ACCEPTABLE)])
+    write("Refset/Language/der2_cRefset_LanguageSnapshot-en_XX1000999_20261115.txt", members,
+          [("e", "20260101", "1", "77", "s", "2", PREFERRED),
+           ("f", "20260101", "1", "77", "s", "5", PREFERRED)])
     return folder
+
+
+def zipped(folder: Path, file: Path) -> Path:
+    """The release as it is downloaded: one ZIP file with the release's folder in it."""
+    with zipfile.ZipFile(file, "w") as archive:
+        for path in sorted(folder.rglob("*")):
+            archive.write(path, f"SnomedCT_Sample_PRODUCTION/{path.relative_to(folder)}")
+    return file
 
 
 def test_a_release_becomes_a_package_of_the_german_terms(tmp_path: Path) -> None:
@@ -61,7 +75,8 @@ def test_a_release_becomes_a_package_of_the_german_terms(tmp_path: Path) -> None
         ("9001", "Musterkrankheit", "disorder",
          [("Musterkrankheit", "preferred"), ("Mustersyndrom", "synonym")]),
         ("9002", "Musterschnitt", "procedure", [("Musterschnitt", "preferred")])]
-    # the retired concept, the retired description and the concept without a German term are out
+    # the retired concept, the retired description, the description no reference set accepts
+    # any more and the concept without a German term are out
     both = read_rf2(tmp_path / "edition", ("de", "en"))
     assert [c.code for c in both.concepts] == ["9001", "9002", "9004"]
     assert [(t.value, t.language) for t in both.concepts[0].terms] == [
@@ -70,6 +85,19 @@ def test_a_release_becomes_a_package_of_the_german_terms(tmp_path: Path) -> None
     with pytest.raises(PackageError) as none:
         read_rf2(tmp_path / "nothing here")
     assert none.value.kind == "not-a-release"
+
+
+def test_the_zip_file_as_downloaded_reads_as_the_folder_does(tmp_path: Path) -> None:
+    folder = release(tmp_path / "edition")
+    archive = zipped(folder, tmp_path / "SnomedCT_Sample_PRODUCTION.zip")
+    assert read_rf2(archive) == read_rf2(folder)
+    assert read_rf2(archive, ("de", "en")) == read_rf2(folder, ("de", "en"))
+    other = tmp_path / "notes.zip"
+    other.write_bytes(b"not a zip file")
+    for wrong in (other, zipped(tmp_path / "empty", tmp_path / "empty.zip")):
+        with pytest.raises(PackageError) as none:
+            read_rf2(wrong)
+        assert none.value.kind == "not-a-release"
 
 
 def test_the_command_takes_a_release_into_the_store(

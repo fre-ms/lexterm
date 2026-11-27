@@ -44,8 +44,8 @@ What is here:
   `--terminal-codes` without the codes of a classification that are not terminal (E10-E14, E11).
 
 - readers for what a user gets themselves: FHIR CodeSystems and FHIR packages (`lexterm packages import`),
-  releases of SNOMED CT in RF2 (`lexterm snomed FOLDER`), and the Alpha-ID-SE of the BfArM (`lexterm alpha-id
-  FILE`), whose everyday wordings of diagnoses become the Alpha-ID as a code system and supplements to the
+  releases of SNOMED CT in RF2, the ZIP file as downloaded (`lexterm snomed RELEASE`), and the Alpha-ID-SE of
+  the BfArM (`lexterm alpha-id FILE`), whose everyday wordings of diagnoses become the Alpha-ID as a code system and supplements to the
   ICD-10-GM and to the ORPHAcodes; `lexterm sources` says where they come from.
 
 - the package window (`lexterm packages window`, PySide6 as the extra `lexterm[window]`): lexterm's packages with

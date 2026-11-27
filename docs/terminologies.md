@@ -15,7 +15,7 @@ What lexterm reads:
 - a CSV file with the columns `term`, `code`, `display`, `class`, `kind`, `language` (only `term` is needed);
 - a FHIR CodeSystem that is a supplement (`content: supplement`): further wordings for the codes of another
   code system, which then code in that system;
-- a release of SNOMED CT in its own form, RF2 (`lexterm snomed FOLDER`);
+- a release of SNOMED CT in its own form, RF2, as the ZIP file downloaded or unpacked (`lexterm snomed RELEASE`);
 - the Alpha-ID-SE as the BfArM gives it out (`lexterm alpha-id FILE`).
 
 The package window (`lexterm packages window`) takes all of these in with "Take in …" and shows this text beside
@@ -65,17 +65,19 @@ The packages hold the Alpha-ID under `http://fhir.de/CodeSystem/bfarm/alpha-id`,
 
 ## SNOMED CT, German National Edition
 
-The International Edition with the German extension, as a folder of RF2 files; new releases on 15 May and 15 November. Only a part is translated: a complete translation is not aimed at, the work follows use cases.
+The International Edition with the German extension, as a ZIP file of RF2 files; new releases on 15 May and 15 November. The International Edition is part of it and is not needed on its own. Only a part is translated: a complete translation is not aimed at, the work follows use cases.
 
 **Conditions.** An affiliate licence is needed. For use in Germany it is free of charge, because Germany is a member of SNOMED International. The licence holder declares the use once a year; its end users need no licence of their own. SNOMED CT may not be passed on: the package stays in one's own store.
 
 1. Register in the Member Licensing and Distribution Service (MLDS) of SNOMED International, choose German when it opens, and apply for the affiliate licence for Germany. The BfArM describes the steps in its notes on applying.
-2. Once approved, download the German National Edition in MLDS and unpack it.
-3. Take the unpacked folder in with the command below. The active concepts are taken with their German terms; with "--term-language en" the English ones as well.
+2. Once approved, download the German National Edition (Germany Edition) in MLDS.
+3. Take the ZIP file in with the command below, without unpacking it (an unpacked folder does as well). The active concepts are taken with their German terms; with "--term-language de --term-language en" the English ones as well.
 
 ```
-lexterm snomed ORDNER
+lexterm snomed SnomedCT_Germany-EditionRelease_PRODUCTION_20261115T120000Z.zip
 ```
+
+The package holds SNOMED CT under `http://snomed.info/sct`, its version as SNOMED CT names one (`http://snomed.info/sct/11000274103/version/20261115`: the module of the German edition and the date of the release). It has every active concept with an active description in the languages chosen that a language reference set of the release accepts; the preferred term of the first language is the name shown, and the class of a concept is the word in brackets at the end of its fully specified name (`disorder`, `procedure`, `organism`). The hierarchy is not taken in. Reading the release of 15 November 2026 takes about 15 seconds: 133,702 of its 387,637 active concepts have German terms, 237,041 in all, most of them disorders, procedures, organisms and findings; body structures, substances and qualifiers are hardly translated.
 
 - [Applying for a licence and using MLDS (BfArM)](https://www.bfarm.de/DE/Kodiersysteme/Terminologien/SNOMED-CT/Lizenz/_node.html)
 - [MLDS, German view](https://mlds.ihtsdotools.org/#/landing/DE?lang=de)

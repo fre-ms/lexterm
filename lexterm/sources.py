@@ -117,12 +117,14 @@ SOURCES: tuple[Source, ...] = (
     Source(
         "snomed",
         ("SNOMED CT, deutsche National Edition", "SNOMED CT, German National Edition"),
-        ("Die International Edition mit der deutschen Erweiterung, als Ordner von RF2-Dateien;"
-         " neue Ausgaben am 15. Mai und am 15. November. Übersetzt ist nur ein Teil: eine"
+        ("Die International Edition mit der deutschen Erweiterung, als ZIP-Datei mit"
+         " RF2-Dateien; neue Ausgaben am 15. Mai und am 15. November. Die International Edition"
+         " ist darin enthalten und wird nicht eigens gebraucht. Übersetzt ist nur ein Teil: eine"
          " Gesamtübersetzung wird nicht angestrebt, die Arbeit folgt Anwendungsfällen.",
-         "The International Edition with the German extension, as a folder of RF2 files; new"
-         " releases on 15 May and 15 November. Only a part is translated: a complete"
-         " translation is not aimed at, the work follows use cases."),
+         "The International Edition with the German extension, as a ZIP file of RF2 files; new"
+         " releases on 15 May and 15 November. The International Edition is part of it and is"
+         " not needed on its own. Only a part is translated: a complete translation is not"
+         " aimed at, the work follows use cases."),
         ("Affiliate-Lizenz nötig. Für die Nutzung in Deutschland ist sie kostenfrei, weil"
          " Deutschland Mitglied von SNOMED International ist. Der Lizenznehmer gibt jährlich"
          " eine Erklärung zur Nutzung ab; seine Endnutzer brauchen keine eigene Lizenz. SNOMED CT"
@@ -138,13 +140,15 @@ SOURCES: tuple[Source, ...] = (
           "Register in the Member Licensing and Distribution Service (MLDS) of SNOMED"
           " International, choose German when it opens, and apply for the affiliate licence"
           " for Germany. The BfArM describes the steps in its notes on applying."),
-         ("Nach der Freigabe im MLDS die deutsche National Edition laden und entpacken.",
-          "Once approved, download the German National Edition in MLDS and unpack it."),
-         ("Den entpackten Ordner mit dem Befehl unten aufnehmen. Übernommen werden die aktiven"
-          " Konzepte mit ihren deutschen Bezeichnungen; mit „--term-language en“ zusätzlich die"
+         ("Nach der Freigabe im MLDS die deutsche National Edition (Germany Edition) laden.",
+          "Once approved, download the German National Edition (Germany Edition) in MLDS."),
+         ("Die ZIP-Datei mit dem Befehl unten aufnehmen, ohne sie zu entpacken (ein entpackter"
+          " Ordner geht ebenso). Übernommen werden die aktiven Konzepte mit ihren deutschen"
+          " Bezeichnungen; mit „--term-language de --term-language en“ zusätzlich die"
           " englischen.",
-          "Take the unpacked folder in with the command below. The active concepts are taken"
-          " with their German terms; with \"--term-language en\" the English ones as well.")),
+          "Take the ZIP file in with the command below, without unpacking it (an unpacked"
+          " folder does as well). The active concepts are taken with their German terms; with"
+          " \"--term-language de --term-language en\" the English ones as well.")),
         ((("Lizenz beantragen und MLDS nutzen (BfArM)", "Applying for a licence and using MLDS"
            " (BfArM)"),
           "https://www.bfarm.de/DE/Kodiersysteme/Terminologien/SNOMED-CT/Lizenz/_node.html"),
@@ -160,7 +164,7 @@ SOURCES: tuple[Source, ...] = (
          (("Fragen und Antworten zur Lizenzvergabe", "Questions and answers on licensing"),
           "https://www.bfarm.de/DE/Kodiersysteme/_FAQ/SNOMED-CT/SNOMED-CT-Lizenzvergabe/"
           "faq-liste.html")),
-        "lexterm snomed ORDNER"),
+        "lexterm snomed SnomedCT_Germany-EditionRelease_PRODUCTION_20261115T120000Z.zip"),
 )
 
 

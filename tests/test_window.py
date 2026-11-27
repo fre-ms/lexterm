@@ -37,13 +37,14 @@ def test_the_window_reads_the_alpha_id_and_shows_where_it_comes_from(tmp_path: P
     set_language("en")
     app = qt.QApplication.instance() or qt.QApplication([])
     try:
-        alpha_id, snomed = readers()
-        assert (alpha_id.folder, snomed.folder) == (False, True)
+        alpha_id, snomed_zip, snomed = readers()
+        assert (alpha_id.folder, snomed_zip.folder, snomed.folder) == (False, False, True)
         with lexterm.open_store(tmp_path / "store.sqlite") as store:
             window = PackageWindow(store, readers(), sources.html("en"))
             assert [a.text() for a in window.take.menu().actions()] == [
                 "FHIR CodeSystem, FHIR package or list …",
                 "Alpha-ID-SE of the BfArM (ZIP or data file) …",
+                "SNOMED CT release (ZIP file as downloaded) …",
                 "SNOMED CT release (unpacked RF2 folder) …"]
             worker = window.take_in(data_file(tmp_path / "file"), alpha_id)
             worker.wait(10_000)

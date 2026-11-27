@@ -7,7 +7,7 @@
     lexterm tag FILE [--package PACKAGE]... [--without PACKAGE]... [--class CLASS]... [--nested]
                      [--annotation FILE [--repeat]]
     lexterm export fhir ANNOTATION [--all] [--apart] [--terminal-codes]
-    lexterm snomed FOLDER [--term-language LANGUAGE]... [--store FILE] [--off]
+    lexterm snomed RELEASE [--term-language LANGUAGE]... [--store FILE] [--off]
     lexterm alpha-id FILE [--store FILE] [--off]
     lexterm sources [--json]
 
@@ -86,17 +86,18 @@ def _export(arguments: list[str]) -> int:
 
 
 def _snomed(arguments: list[str]) -> int:
-    """``lexterm snomed FOLDER``: take a release of SNOMED CT (RF2) into lexterm's store."""
+    """``lexterm snomed RELEASE``: take a release of SNOMED CT (RF2) into lexterm's store."""
     from lexterm.snomed import read_rf2
 
     parser = argparse.ArgumentParser(prog="lexterm snomed", description=say(
-        "Eine SNOMED-CT-Ausgabe (RF2, Ordner der entpackten Ausgabe) in die eigene Ablage"
-        " aufnehmen. SNOMED CT ist lizenzpflichtig; das Paket bleibt bei Ihnen. Woher die"
-        " Ausgabe kommt, sagt „lexterm sources“.",
-        "Take a release of SNOMED CT (RF2, the folder of the unpacked release) into your own"
-        " store. SNOMED CT needs a licence; the package stays with you. \"lexterm sources\""
-        " says where the release comes from."))
-    parser.add_argument("folder", type=Path)
+        "Eine SNOMED-CT-Ausgabe (RF2: die ZIP-Datei, wie sie geladen wurde, oder der Ordner,"
+        " zu dem sie entpackt wurde) in die eigene Ablage aufnehmen. SNOMED CT ist"
+        " lizenzpflichtig; das Paket bleibt bei Ihnen. Woher die Ausgabe kommt, sagt"
+        " „lexterm sources“.",
+        "Take a release of SNOMED CT (RF2: the ZIP file as it was downloaded, or the folder it"
+        " was unpacked to) into your own store. SNOMED CT needs a licence; the package stays"
+        " with you. \"lexterm sources\" says where the release comes from."))
+    parser.add_argument("release", type=Path)
     parser.add_argument("--off", action="store_true", help=say(
         "aufnehmen, aber noch nicht anwenden (nicht angekreuzt)",
         "take in, but do not apply yet (unticked)"))
@@ -109,7 +110,7 @@ def _snomed(arguments: list[str]) -> int:
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(arguments)
     try:
-        package = read_rf2(args.folder, tuple(args.term_language or ["de"]))
+        package = read_rf2(args.release, tuple(args.term_language or ["de"]))
         with lexterm.open_store(args.store) as store:
             info = store.add_package(package, False if args.off else None)
     except (LexError, OSError, UnicodeDecodeError) as error:

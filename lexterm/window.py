@@ -36,6 +36,8 @@ def readers() -> tuple[Reader, ...]:
     return (Reader(("Alpha-ID-SE des BfArM (ZIP oder Datendatei)",
                     "Alpha-ID-SE of the BfArM (ZIP or data file)"), _alpha_id, False,
                    "*.zip *.txt"),
+            Reader(("SNOMED-CT-Ausgabe (ZIP-Datei, wie geladen)",
+                    "SNOMED CT release (ZIP file as downloaded)"), _snomed, False, "*.zip"),
             Reader(("SNOMED-CT-Ausgabe (entpackter RF2-Ordner)",
                     "SNOMED CT release (unpacked RF2 folder)"), _snomed, True))
 
