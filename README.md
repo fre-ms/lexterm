@@ -37,6 +37,9 @@ What is here:
 - the output as FHIR (`lexterm.export.codeable_concepts`, `lexterm export fhir ANNOTATION`): a mention becomes a
   `CodeableConcept` with its wording as text and a coding from every code system that knows it.
 
+- readers for what a user gets themselves: FHIR CodeSystems and FHIR packages (`lexterm packages import`), and
+  releases of SNOMED CT in RF2 (`lexterm snomed FOLDER`); `lexterm sources` says where they come from.
+
 One wording is coded in every code system that lists it; nothing chooses between packages. Without a store
 lexterm recognises with the package it brings, in memory, and writes nothing anywhere; that is how a program
 that reads documents uses it. Not here yet: the windows, the output for medDAV, the client and server of a
@@ -62,6 +65,8 @@ through the FHIR terminology interface and recognises terms for other programs.
 
 ## Documents
 
+- [Getting terminologies](docs/terminologies.md): where the coding systems of the BfArM (ICD-10-GM, OPS, ATC …)
+  and the German edition of SNOMED CT come from, under which conditions, and how lexterm takes them in.
 - [Design](docs/design.md): packages, recognition, the annotation document, the windows, output, client and
   server, stages.
 - [Survey of open-source tools](reports/Bestandsaufnahme%20quelloffener%20Werkzeuge.md) (in German): terminology

@@ -39,7 +39,7 @@ from lexcor.annotation import packages_of
 from lexterm import bundled, export
 from lexterm.rules import EPONYM_HEADS, VARIANTS
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 __all__ = ["EPONYM_HEADS", "VARIANTS", "annotate", "bundled", "cover", "covers", "export",
            "install", "open_store", "recogniser", "tag"]

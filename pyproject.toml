@@ -1,6 +1,6 @@
 [project]
 name = "lexterm"
-version = "0.2.1"
+version = "0.2.2"
 description = "Finds medical terms in German clinical text and assigns them the codes of their terminologies."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -18,7 +18,7 @@ classifiers = [
 ]
 dependencies = [
   # packages of terms, their store and their recognition: the core lexterm shares with lexident
-  "lexcor>=0.2.1",
+  "lexcor>=0.2.2",
 ]
 
 [project.scripts]
@@ -33,7 +33,7 @@ dev = [
 
 [tool.uv.sources]
 # a released tag, not the working tree next door: lexterm moves to a new core on purpose
-lexcor = { git = "https://github.com/fre-ms/lexcor", tag = "v0.2.1" }
+lexcor = { git = "https://github.com/fre-ms/lexcor", tag = "v0.2.2" }
 
 [build-system]
 requires = ["hatchling"]

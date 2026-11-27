@@ -75,3 +75,32 @@ def test_the_command_line_gives_codeable_concepts(
     assert all(c["codeableConcept"]["coding"][0]["userSelected"] for c in concepts)
     assert main(["--language", "en", "export", "fhir", str(files / "missing.json")]) == 1
     assert json.loads(capsys.readouterr().out)["error"] == "unreadable"
+
+
+def test_the_command_line_says_where_terminologies_come_from(
+        capsys: pytest.CaptureFixture[str]) -> None:
+    from lexterm import sources
+
+    assert main(["--language", "de", "sources"]) == 0
+    german = capsys.readouterr().out
+    assert "SNOMED CT, deutsche National Edition" in german and "Affiliate-Lizenz" in german
+    assert "https://mlds.ihtsdotools.org/" in german and "lexterm snomed ORDNER" in german
+    assert main(["--language", "en", "sources", "--json"]) == 0
+    listed = json.loads(capsys.readouterr().out)["sources"]
+    assert [s["key"] for s in listed] == ["bfarm", "alpha-id", "snomed"]
+    assert listed[0]["name"] == "Coding systems of the BfArM"
+    for source in sources.SOURCES:  # both languages everywhere, and real addresses
+        assert all(source.name) and all(source.what) and all(source.conditions)
+        assert source.steps and all(all(step) for step in source.steps)
+        assert all(all(label) and url.startswith("https://") for label, url in source.links)
+
+
+def test_the_documentation_names_every_source_the_program_names() -> None:
+    from pathlib import Path as Folder
+
+    from lexterm import sources
+
+    page = (Folder(__file__).parent.parent / "docs" / "terminologies.md").read_text("utf-8")
+    for source in sources.sources("en"):
+        assert source["name"] in page and source["command"] in page
+        assert all(link["url"] in page for link in source["links"])
