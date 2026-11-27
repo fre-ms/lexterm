@@ -3,6 +3,7 @@
 """The command line of lexterm: the core's commands under lexterm's name.
 
     lexterm packages list | import FILE | export PACKAGE FILE | remove PACKAGE
+    lexterm packages on PACKAGE... | off PACKAGE... | window
     lexterm tag FILE [--package PACKAGE]... [--without PACKAGE]... [--class CLASS]... [--nested]
                      [--annotation FILE [--repeat]]
     lexterm export fhir ANNOTATION [--all] [--apart] [--terminal-codes]
@@ -35,6 +36,12 @@ def _tag(text: str, store: Store, packages: Iterable[str] | None,
          classes: Iterable[str] | None, nested: bool) -> list[Mention]:
     return lexterm.tag(text, store if store.packages() else None, packages, classes,
                        nested=nested)
+
+
+def _window(store: Store) -> int:
+    from lexterm.window import open_window
+
+    return open_window(store)
 
 
 def _listing(store: Store, packages: list[str] | None) -> list[dict[str, str]]:
@@ -190,7 +197,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
             return command(given[given.index(word) + 1:])
     arguments = given
     return lexcor.cli.main(arguments, program="lexterm", library="lexterm", tagger=_tag,
-                           version=lexterm.__version__, lister=_listing)
+                           version=lexterm.__version__, lister=_listing, window=_window)
 
 
 if __name__ == "__main__":

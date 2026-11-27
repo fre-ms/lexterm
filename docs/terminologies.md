@@ -19,6 +19,9 @@ What lexterm reads:
 - a release of SNOMED CT in its own form, RF2 (`lexterm snomed FOLDER`);
 - the Alpha-ID-SE as the BfArM gives it out (`lexterm alpha-id FILE`).
 
+The package window (`lexterm packages window`) takes all of these in with "Take in …" and shows this text beside
+the packages; there every package has a box to tick for the runs that follow.
+
 A package that may not be passed on stays in the user's own store and is never written into an export meant for
 others. The addresses below were read on 27 November 2026.
 

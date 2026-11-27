@@ -19,7 +19,14 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python }}
+      - name: Libraries Qt needs for windows without a screen (Linux)
+        if: runner.os == 'Linux'
+        run: >
+          sudo apt-get update && sudo apt-get install -y
+          libegl1 libgl1 libopengl0 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4
       - run: uv sync --dev
       - run: uv run ruff check .
       - run: uv run mypy
       - run: uv run pytest -v
+        env:
+          QT_QPA_PLATFORM: offscreen

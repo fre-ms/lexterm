@@ -46,6 +46,10 @@ What is here:
   FILE`), whose everyday wordings of diagnoses become the Alpha-ID as a code system and supplements to the
   ICD-10-GM and to the ORPHAcodes; `lexterm sources` says where they come from.
 
+- the package window (`lexterm packages window`, PySide6 as the extra `lexterm[window]`): lexterm's packages with
+  a box to tick for the runs that follow, taking in every form above, and beside them where terminologies come
+  from, with the links.
+
 One wording is coded in every code system that lists it; nothing chooses between packages. Without a store
 lexterm recognises with the package it brings, in memory, and writes nothing anywhere; that is how a program
 that reads documents uses it. Not here yet: the windows, the output for medDAV, the client and server of a

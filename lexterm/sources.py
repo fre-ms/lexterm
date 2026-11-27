@@ -12,6 +12,7 @@ in one place.  The addresses were read on 27 November 2026.
 
 from __future__ import annotations
 
+import html as markup
 from dataclasses import dataclass
 from typing import Any
 
@@ -170,6 +171,27 @@ def sources(code: str | None = None) -> list[dict[str, Any]]:
              "conditions": s.conditions[place], "steps": [step[place] for step in s.steps],
              "links": [{"label": label[place], "url": url} for label, url in s.links],
              "command": s.command} for s in SOURCES]
+
+
+def html(code: str | None = None) -> str:
+    """The sources as HTML, for a window that shows them beside its packages."""
+    german = (code or current()) == "de"
+    parts = []
+    for source in sources(code):
+        steps = "".join(f"<li>{markup.escape(step)}</li>" for step in source["steps"])
+        links = "".join(f'<li><a href="{markup.escape(link["url"])}">'
+                        f'{markup.escape(link["label"])}</a></li>' for link in source["links"])
+        parts.append(
+            f"<h3>{markup.escape(source['name'])}</h3><p>{markup.escape(source['what'])}</p>"
+            f"<p><b>{'Bedingungen' if german else 'Conditions'}:</b>"
+            f" {markup.escape(source['conditions'])}</p><ol>{steps}</ol>"
+            f"<p>{'Befehl' if german else 'Command'}: <code>"
+            f"{markup.escape(source['command'])}</code></p><ul>{links}</ul>")
+    intro = ("lexterm lädt nichts selbst: Sie laden die Datei unter den Bedingungen der Quelle,"
+             " und „Aufnehmen …“ liest sie." if german else
+             "lexterm downloads nothing itself: you download the file under the source's"
+             " conditions, and \"Take in …\" reads it.")
+    return f"<p>{markup.escape(intro)}</p>" + "".join(parts)
 
 
 def text(code: str | None = None) -> str:
