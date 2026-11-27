@@ -6,6 +6,7 @@
     lexterm tag FILE [--package PACKAGE]... [--class CLASS]... [--nested] [--annotation FILE]
     lexterm export fhir ANNOTATION [--all] [--apart]
     lexterm snomed FOLDER [--term-language LANGUAGE]... [--store FILE]
+    lexterm alpha-id FILE [--store FILE]
     lexterm sources [--json]
 
 The store is lexterm's in the user's data folder unless ``--store`` names another.  A store
@@ -101,6 +102,54 @@ def _snomed(arguments: list[str]) -> int:
     return 0
 
 
+def _alpha_id(arguments: list[str]) -> int:
+    """``lexterm alpha-id FILE``: take the Alpha-ID-SE of the BfArM into lexterm's store."""
+    from lexterm.alphaid import read_alpha_id
+
+    parser = argparse.ArgumentParser(prog="lexterm alpha-id", description=say(
+        "Die Alpha-ID-SE des BfArM in die eigene Ablage aufnehmen: die Datei, wie sie geladen"
+        " wurde (ZIP), oder die Datendatei darin. Es entstehen die Alpha-ID als CodeSystem und"
+        " ihre Bezeichnungen als Ergänzung zur ICD-10-GM und zu den ORPHAcodes. Woher die Datei"
+        " kommt, sagt „lexterm sources“.",
+        "Take the Alpha-ID-SE of the BfArM into your own store: the file as downloaded (ZIP)"
+        " or the data file in it. The Alpha-ID comes as a code system, and its wordings as a"
+        " supplement to the ICD-10-GM and to the ORPHAcodes. \"lexterm sources\" says where"
+        " the file comes from."))
+    parser.add_argument("file", type=Path)
+    parser.add_argument("--store", type=Path, help=say(
+        "Datei der Ablage (sonst lexterms Ablage im Datenordner)",
+        "file of the store (else lexterm's store in the data folder)"))
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args(arguments)
+    try:
+        packages, retired = read_alpha_id(args.file)
+        with lexterm.open_store(args.store) as store:
+            infos = [store.add_package(package) for package in packages]
+            fits = [lexcor.cli.fit_notes(store, info) for info in infos]
+    except (LexError, OSError) as error:
+        if not isinstance(error, LexError):
+            error = LexError("unreadable", str(error), str(error))
+        print(json.dumps({"error": error.kind, "message": error.messages}, ensure_ascii=False)
+              if args.json else str(error), file=sys.stdout if args.json else sys.stderr)
+        return 1
+    lines = []
+    for info, (_fit, notes) in zip(infos, fits, strict=True):
+        lines.append(say(
+            f"Aufgenommen: {info.title}, Fassung {info.version}, mit {info.concepts} Kodes in"
+            f" {info.terms} Bezeichnungen.",
+            f"Taken in: {info.title}, version {info.version}, with {info.concepts} codes in"
+            f" {info.terms} wordings."))
+        lines += [f"  {note}" for note in notes]
+    lines.append(say(f"Ausgelassen: {retired} Einträge, die die Datei als nicht mehr gültig"
+                     " kennzeichnet.",
+                     f"Left out: {retired} entries the file marks as no longer valid."))
+    document = {"packages": [vars(info) for info in infos], "retired": retired,
+                "fit": {info.url: fit for info, (fit, _notes) in zip(infos, fits, strict=True)
+                        if fit is not None}}
+    print(json.dumps(document, ensure_ascii=False, indent=1) if args.json else "\n".join(lines))
+    return 0
+
+
 def _sources(arguments: list[str]) -> int:
     """``lexterm sources``: where terminologies come from and how they are taken in."""
     from lexterm import sources
@@ -123,7 +172,7 @@ def main(arguments: Sequence[str] | None = None) -> int:
     for i, word in enumerate(given[:-1]):
         if word == "--language" and given[i + 1] in ("de", "en"):
             set_language(given[i + 1])
-    own = {"export": _export, "snomed": _snomed, "sources": _sources}
+    own = {"export": _export, "snomed": _snomed, "alpha-id": _alpha_id, "sources": _sources}
     for word, command in own.items():
         if word in given and (given.index(word) == 0 or given[0].startswith("--")):
             return command(given[given.index(word) + 1:])

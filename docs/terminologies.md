@@ -14,7 +14,10 @@ What lexterm reads:
 - a FHIR package (`.tgz`): every CodeSystem in it is taken in, and those that name their concepts elsewhere are
   left out and named;
 - a CSV file with the columns `term`, `code`, `display`, `class`, `kind`, `language` (only `term` is needed);
-- a release of SNOMED CT in its own form, RF2 (`lexterm snomed FOLDER`).
+- a FHIR CodeSystem that is a supplement (`content: supplement`): further wordings for the codes of another
+  code system, which then code in that system;
+- a release of SNOMED CT in its own form, RF2 (`lexterm snomed FOLDER`);
+- the Alpha-ID-SE as the BfArM gives it out (`lexterm alpha-id FILE`).
 
 A package that may not be passed on stays in the user's own store and is never written into an export meant for
 others. The addresses below were read on 27 November 2026.
@@ -40,16 +43,20 @@ lexterm packages import CodeSystem-icd10gm-2026.json
 
 ## Alpha-ID-SE of the BfArM
 
-More than 89,000 diagnosis wordings from the alphabetical index, each with its ICD-10-GM code and for rare diseases the Orpha number; new every year.
+More than 89,000 diagnosis wordings from the alphabetical index to the ICD-10-GM, each with its Alpha-ID, its ICD-10-GM codes and for rare diseases the Orpha number; new every year.
 
-**Conditions.** Free of charge, under the download conditions of the BfArM.
+**Conditions.** Free of charge, under the download conditions of the BfArM (no changes, and the source is to be named); for the Orpha numbers the terms of use of Orphadata and INSERM hold as well.
 
-1. Download the file from the BfArM's download page.
-2. lexterm has no reader of its own for its layout yet: bring the file into a CSV file with the columns "term" (wording) and "code" (ICD-10-GM code).
+1. Download the Alpha-ID-SE of the year wanted from the BfArM's download page (a ZIP file, for example alphaidse2027.zip). The edition of a year belongs to the ICD-10-GM of that year.
+2. Take the file in as it was downloaded, with the command below; it need not be unpacked. Three packages come of it: the Alpha-ID as a code system of its own, and its wordings as a supplement to the ICD-10-GM and to the ORPHAcodes. So a wording in a text is coded in all three systems at once, and the ICD-10-GM keeps its official titles.
+3. Where the store holds the ICD-10-GM, the codes carry their official titles. lexterm says on taking the file in when the years differ or the ICD-10-GM of the store does not have a code. Entries the file marks as no longer valid are left out.
+4. The index lists general words ("Therapie", "Schmerzen") and abbreviations as well. What lexterm finds with them is a proposal for a person to check.
 
 ```
-lexterm packages import alpha-id.csv --url http://fhir.de/CodeSystem/bfarm/icd-10-gm --term-language de
+lexterm alpha-id alphaidse2027.zip
 ```
+
+The packages hold the Alpha-ID under `http://fhir.de/CodeSystem/bfarm/alpha-id`, with the codes the file gives a wording as properties of its concept (`icd-10-gm-primary`, `icd-10-gm-star`, `icd-10-gm-additional`, `icd-10-gm-primary-2`, `orpha`), and code the wordings in `http://fhir.de/CodeSystem/bfarm/icd-10-gm` and `http://www.orpha.net`. A wording is taken as the file gives it: one with an explanation in square brackets is found only where a text has it in that form.
 
 - [Alpha-ID-SE at the BfArM](https://www.bfarm.de/DE/Kodiersysteme/Terminologien/Alpha-ID-SE/_node.html)
 - [Downloads of the Alpha-ID-SE](https://www.bfarm.de/DE/Kodiersysteme/Services/Downloads/_node.html#anker-alpha-id-downloads)

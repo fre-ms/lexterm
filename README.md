@@ -37,8 +37,10 @@ What is here:
 - the output as FHIR (`lexterm.export.codeable_concepts`, `lexterm export fhir ANNOTATION`): a mention becomes a
   `CodeableConcept` with its wording as text and a coding from every code system that knows it.
 
-- readers for what a user gets themselves: FHIR CodeSystems and FHIR packages (`lexterm packages import`), and
-  releases of SNOMED CT in RF2 (`lexterm snomed FOLDER`); `lexterm sources` says where they come from.
+- readers for what a user gets themselves: FHIR CodeSystems and FHIR packages (`lexterm packages import`),
+  releases of SNOMED CT in RF2 (`lexterm snomed FOLDER`), and the Alpha-ID-SE of the BfArM (`lexterm alpha-id
+  FILE`), whose everyday wordings of diagnoses become the Alpha-ID as a code system and supplements to the
+  ICD-10-GM and to the ORPHAcodes; `lexterm sources` says where they come from.
 
 One wording is coded in every code system that lists it; nothing chooses between packages. Without a store
 lexterm recognises with the package it brings, in memory, and writes nothing anywhere; that is how a program

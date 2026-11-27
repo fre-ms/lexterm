@@ -116,7 +116,10 @@ it (section 10.3).
 ### 4.3 Importing and exporting
 
 Importers: FHIR CodeSystem (JSON) and FHIR packages, CSV, SNOMED CT release files (RF2: descriptions and the
-language reference set), MeSH XML. A source in a form of its own (a dictionary's export) is brought to CSV by a
+language reference set), the Alpha-ID-SE of the BfArM, MeSH XML. The Alpha-ID-SE, the alphabetical index to
+the ICD-10-GM, gives three packages: the Alpha-ID as a code system of its own, and its wordings as a supplement
+to the ICD-10-GM and as one to the ORPHAcodes (lexcor's design, section 3.1), so that a wording in a text is
+coded in all three at once and the classification keeps its own titles and hierarchy. A source in a form of its own (a dictionary's export) is brought to CSV by a
 small script that stays with the user.
 
 Exports: FHIR CodeSystem and CSV, of a whole package or a selection.

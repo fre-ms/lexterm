@@ -67,25 +67,52 @@ SOURCES: tuple[Source, ...] = (
     Source(
         "alpha-id",
         ("Alpha-ID-SE des BfArM", "Alpha-ID-SE of the BfArM"),
-        ("Über 89.000 Diagnosebezeichnungen aus dem Alphabetischen Verzeichnis, jede mit ihrem"
-         " ICD-10-GM-Kode und bei Seltenen Erkrankungen der Orpha-Kennnummer; jährlich neu.",
-         "More than 89,000 diagnosis wordings from the alphabetical index, each with its"
-         " ICD-10-GM code and for rare diseases the Orpha number; new every year."),
-        ("Kostenfrei, unter den Downloadbedingungen des BfArM.",
-         "Free of charge, under the download conditions of the BfArM."),
-        (("Die Datei von der Download-Seite des BfArM laden.",
-          "Download the file from the BfArM's download page."),
-         ("lexterm hat für ihren Aufbau noch keinen eigenen Leser: die Datei in eine CSV-Datei"
-          " mit den Spalten „term“ (Bezeichnung) und „code“ (ICD-10-GM-Kode) bringen.",
-          "lexterm has no reader of its own for its layout yet: bring the file into a CSV"
-          " file with the columns \"term\" (wording) and \"code\" (ICD-10-GM code).")),
+        ("Über 89.000 Diagnosebezeichnungen aus dem Alphabetischen Verzeichnis zur ICD-10-GM,"
+         " jede mit ihrer Alpha-ID, ihren ICD-10-GM-Kodes und bei Seltenen Erkrankungen der"
+         " Orpha-Kennnummer; jährlich neu.",
+         "More than 89,000 diagnosis wordings from the alphabetical index to the ICD-10-GM,"
+         " each with its Alpha-ID, its ICD-10-GM codes and for rare diseases the Orpha number;"
+         " new every year."),
+        ("Kostenfrei, unter den Downloadbedingungen des BfArM (Änderungsverbot und"
+         " Quellenangabe); für die Orpha-Kennnummern gelten zusätzlich die Nutzungsbedingungen"
+         " von Orphadata und INSERM.",
+         "Free of charge, under the download conditions of the BfArM (no changes, and the"
+         " source is to be named); for the Orpha numbers the terms of use of Orphadata and"
+         " INSERM hold as well."),
+        (("Auf der Download-Seite des BfArM die Alpha-ID-SE des gewünschten Jahres laden (eine"
+          " ZIP-Datei, zum Beispiel alphaidse2027.zip). Die Ausgabe eines Jahres gehört zur"
+          " ICD-10-GM desselben Jahres.",
+          "Download the Alpha-ID-SE of the year wanted from the BfArM's download page (a ZIP"
+          " file, for example alphaidse2027.zip). The edition of a year belongs to the"
+          " ICD-10-GM of that year."),
+         ("Die Datei so, wie sie geladen wurde, mit dem Befehl unten aufnehmen; sie muss nicht"
+          " entpackt werden. Es entstehen drei Pakete: die Alpha-ID als eigenes CodeSystem und"
+          " ihre Bezeichnungen als Ergänzung zur ICD-10-GM und zu den ORPHAcodes. Eine"
+          " Bezeichnung im Text wird so in allen drei Systemen zugleich kodiert, und die"
+          " ICD-10-GM behält ihre amtlichen Titel.",
+          "Take the file in as it was downloaded, with the command below; it need not be"
+          " unpacked. Three packages come of it: the Alpha-ID as a code system of its own, and"
+          " its wordings as a supplement to the ICD-10-GM and to the ORPHAcodes. So a wording"
+          " in a text is coded in all three systems at once, and the ICD-10-GM keeps its"
+          " official titles."),
+         ("Liegt die ICD-10-GM in der Ablage, tragen die Kodes ihre amtlichen Titel. lexterm"
+          " sagt beim Aufnehmen, wenn die Jahre nicht übereinstimmen oder die ICD-10-GM der"
+          " Ablage Kodes nicht kennt. Einträge, die die Datei als nicht mehr gültig"
+          " kennzeichnet, werden ausgelassen.",
+          "Where the store holds the ICD-10-GM, the codes carry their official titles."
+          " lexterm says on taking the file in when the years differ or the ICD-10-GM of the"
+          " store does not have a code. Entries the file marks as no longer valid are left"
+          " out."),
+         ("Das Verzeichnis führt auch allgemeine Wörter („Therapie“, „Schmerzen“) und"
+          " Abkürzungen. Was lexterm damit findet, ist ein Vorschlag, den ein Mensch prüft.",
+          "The index lists general words (\"Therapie\", \"Schmerzen\") and abbreviations as"
+          " well. What lexterm finds with them is a proposal for a person to check.")),
         ((("Alpha-ID-SE beim BfArM", "Alpha-ID-SE at the BfArM"),
           "https://www.bfarm.de/DE/Kodiersysteme/Terminologien/Alpha-ID-SE/_node.html"),
          (("Downloads Alpha-ID-SE", "Downloads of the Alpha-ID-SE"),
           "https://www.bfarm.de/DE/Kodiersysteme/Services/Downloads/_node.html"
           "#anker-alpha-id-downloads")),
-        "lexterm packages import alpha-id.csv --url http://fhir.de/CodeSystem/bfarm/icd-10-gm"
-        " --term-language de"),
+        "lexterm alpha-id alphaidse2027.zip"),
     Source(
         "snomed",
         ("SNOMED CT, deutsche National Edition", "SNOMED CT, German National Edition"),
